@@ -2001,8 +2001,25 @@ function renderChallengeMissMap(container, rounds){
         title: `Round ${label} guess: ${formatDddLabel(round.clicked, round.clickedUf)}`,
         icon: challengeGuessPinIcon(label)
       });
+      const guideLine = new google.maps.Polyline({
+        map: challengeEndMap,
+        path: [round.clickedPoint, round.targetPoint],
+        strokeOpacity: 0,
+        clickable: false,
+        icons: [{
+          icon: {
+            path: 'M 0,-1 0,1',
+            strokeOpacity: 1,
+            strokeColor: '#4f5b63',
+            strokeWeight: 2,
+            scale: 3
+          },
+          offset: '0',
+          repeat: '12px'
+        }]
+      });
 
-      challengeEndMapOverlays.push(guessMarker);
+      challengeEndMapOverlays.push(guessMarker, guideLine);
       bounds.extend(round.clickedPoint);
     });
 
