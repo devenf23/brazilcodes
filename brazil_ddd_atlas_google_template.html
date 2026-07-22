@@ -105,6 +105,124 @@
     background: transparent;
   }
 
+  .view{
+    position:absolute;
+    inset:0;
+    z-index:30;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+    background:
+      radial-gradient(circle at 28% 24%, rgba(212,162,76,0.14), transparent 38%),
+      linear-gradient(135deg, rgba(8,26,36,0.96), rgba(18,58,77,0.94));
+  }
+  #homeView{ align-items:flex-start; }
+  .view.hidden,
+  .game-ui.hidden{ display:none; }
+  .home-card,
+  .mode-card,
+  .states-card{
+    width:min(880px, 100%);
+    border:1px solid rgba(212,162,76,0.32);
+    border-radius:14px;
+    background: rgba(18,58,77,0.78);
+    box-shadow: 0 28px 70px rgba(0,0,0,0.42);
+    backdrop-filter: blur(7px);
+  }
+  .home-card{
+    margin-top: clamp(18px, 6vh, 72px);
+    padding: clamp(28px, 5vw, 56px);
+  }
+  .home-kicker,
+  .mode-kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    margin-bottom: 14px;
+  }
+  .game-carousel{
+    display:grid;
+    grid-template-columns: 58px minmax(0, 1fr) 58px;
+    align-items:center;
+    gap: 12px;
+    margin-bottom: 26px;
+  }
+  .carousel-arrow{
+    width:48px;
+    height:48px;
+    border-radius:999px;
+    font-size:22px;
+    line-height:1;
+  }
+  .carousel-arrow.invisible{ visibility:hidden; }
+  .carousel-title-wrap{ overflow:hidden; }
+  .carousel-title{
+    width:100%;
+    border:0;
+    background:transparent;
+    color:var(--paper);
+    font-family:'Fraunces', serif;
+    font-size: clamp(48px, 10vw, 104px);
+    font-weight:700;
+    line-height:0.95;
+    text-align:center;
+    padding: 8px 0;
+    transition: transform 0.22s ease, opacity 0.22s ease;
+  }
+  .carousel-title:hover{ background:transparent; color:var(--gold-bright); }
+  .carousel-title.slide-out-left{ transform:translateX(-55%); opacity:0; }
+  .carousel-title.slide-out-right{ transform:translateX(55%); opacity:0; }
+  .carousel-title.slide-in-left{ animation: titleInLeft 0.22s ease; }
+  .carousel-title.slide-in-right{ animation: titleInRight 0.22s ease; }
+  @keyframes titleInLeft{ from{ transform:translateX(-55%); opacity:0; } to{ transform:translateX(0); opacity:1; } }
+  @keyframes titleInRight{ from{ transform:translateX(55%); opacity:0; } to{ transform:translateX(0); opacity:1; } }
+  .home-note{ color:var(--fog); font-size:15px; margin:0; text-align:center; }
+  .mode-card{ padding: clamp(24px, 4vw, 42px); }
+  .mode-card h2,
+  .states-card h2{
+    font-family:'Fraunces', serif;
+    font-size: clamp(32px, 6vw, 58px);
+    margin:0 0 22px;
+  }
+  .mode-buttons{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .mode-btn{
+    min-height:160px;
+    border-radius:12px;
+    font-family:'Fraunces', serif;
+    font-size: clamp(26px, 4vw, 40px);
+    color:var(--paper);
+    background: rgba(212,162,76,0.12);
+  }
+  .mode-btn:hover{ background: rgba(212,162,76,0.24); }
+  .back-btn{ margin-top:18px; }
+  .states-card{
+    display:grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
+    gap:24px;
+    align-items:center;
+    padding: clamp(22px, 4vw, 38px);
+  }
+  .states-map-shell{
+    min-height: min(68vh, 620px);
+    border-radius:12px;
+    background: rgba(8,26,36,0.45);
+    border:1px solid rgba(242,236,217,0.12);
+    padding:18px;
+  }
+  #statesSvg{ width:100%; height:100%; min-height: min(60vh, 560px); display:block; }
+  .state-shape{ fill:#cbb98c; fill-opacity:0.45; stroke:#081a24; stroke-width:1.25; }
+  .state-shape:nth-child(3n){ fill:#6fbfae; }
+  .state-shape:nth-child(3n+1){ fill:#d4a24c; }
+  .state-shape:nth-child(3n+2){ fill:#5fa8d3; }
+  .states-card p{ color:var(--fog); font-size:16px; line-height:1.55; }
+
   #googleMap{
     position:absolute;
     inset:0;
@@ -171,13 +289,12 @@
   .region.solved{ /* color unchanged; label reveal indicates solved state */ }
   .region.correct-flash{ fill: var(--moss) !important; opacity:1 !important; }
   .region.wrong-flash{ fill: var(--coral) !important; opacity:1 !important; }
-  .region.target-reveal{ fill: var(--gold) !important; opacity:1 !important; }
 
   .grp-1{ fill: #e3b23c; } .grp-2{ fill: #d97b6c; } .grp-3{ fill: #b06bb0; }
   .grp-4{ fill: #5fa8d3; } .grp-5{ fill: #4f7cac; } .grp-6{ fill: #5fae7a; }
   .grp-7{ fill: #c9a13b; } .grp-8{ fill: #d9577a; } .grp-9{ fill: #6fbfae; }
 
-  svg.flat-colors .region:not(.correct-flash):not(.wrong-flash):not(.target-reveal){ fill: #cbb98c !important; fill-opacity: 0.28; }
+  svg.flat-colors .region:not(.correct-flash):not(.wrong-flash){ fill: #cbb98c !important; fill-opacity: 0.28; }
 
   /* Borders off: instead of stroke:none (which exposes hairline gaps between
      independently-simplified neighboring polygons), paint the seam with a
@@ -243,6 +360,8 @@
   .score-cell{ text-align:center; background: rgba(242,236,217,0.05); border: 1px solid rgba(242,236,217,0.12); border-radius: 4px; padding: 6px 2px; }
   .score-cell .num{ font-family:'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; color: var(--paper); display:block; }
   .score-cell .lbl{ font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fog); }
+  .challenge-only.hidden,
+  .training-only.hidden{ display:none; }
 
   .digit-groups{ display:flex; flex-direction:column; gap: 4px; }
   .digit-row{ display:flex; align-items:center; gap: 7px; font-size: 11.5px; padding: 4px 6px; border-radius: 4px; background: rgba(242,236,217,0.03); }
@@ -272,15 +391,49 @@
   button.primary:hover{ background: var(--gold-bright); }
   button.wide{ width:100%; margin-top: 3px; }
 
+  .difficulty-buttons{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  .difficulty-btn{
+    padding: 7px 4px;
+    font-size: 11.5px;
+    color: var(--paper);
+  }
+  .difficulty-btn.selected{
+    background: var(--gold);
+    border-color: var(--gold-bright);
+    color: var(--ink-deep);
+    font-weight: 700;
+    box-shadow: 0 0 0 1px rgba(232,189,110,0.25), 0 0 18px rgba(212,162,76,0.22);
+  }
+
   .reveal-toggle{ display:flex; align-items:center; justify-content: space-between; font-size: 12px; margin-top: 2px; }
+  .reveal-toggle.disabled{ color: rgba(127,163,174,0.65); }
   .switch{ position: relative; width: 34px; height: 19px; flex-shrink:0; }
   .switch input{ opacity:0; width:0; height:0; }
   .slider{ position:absolute; inset:0; background: rgba(242,236,217,0.2); border-radius: 999px; cursor:pointer; transition: background 0.15s ease; }
   .slider::before{ content:""; position:absolute; width:13px; height:13px; left:3px; top:3px; background: var(--paper); border-radius:50%; transition: transform 0.15s ease; }
   .switch input:checked + .slider{ background: var(--gold); }
   .switch input:checked + .slider::before{ transform: translateX(15px); }
+  .switch input:disabled + .slider{ opacity:0.42; cursor:not-allowed; }
+
+  .time-limit-control{ display:flex; flex-direction:column; gap: 8px; }
+  .time-limit-readout{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; font-size:12px; color:var(--fog); }
+  .time-limit-readout strong{ font-family:'IBM Plex Mono', monospace; color:var(--paper); font-size:15px; }
+  .time-limit-control input[type=range]{ width:100%; accent-color: var(--gold); }
 
   .streak-note{ font-size: 10.5px; color: var(--fog); margin-top: 6px; line-height:1.45; }
+
+  @media (max-width: 720px){
+    .mode-buttons,
+    .states-card{ grid-template-columns:1fr; }
+    .mode-btn{ min-height:118px; }
+    .game-carousel{ grid-template-columns:44px minmax(0,1fr) 44px; }
+    .carousel-arrow{ width:40px; height:40px; }
+  }
 
   ::selection{ background: var(--gold); color: var(--ink-deep); }
 </style>
@@ -291,33 +444,82 @@
     <div id="googleMap"></div>
   </div>
 
-  <header>
+  <section class="view" id="homeView" aria-label="Game selection">
+    <div class="home-card">
+      <div class="home-kicker">Correios &amp; Telefonia · Atlas do Brasil</div>
+      <div class="game-carousel">
+        <button class="carousel-arrow invisible" id="homePrev" type="button" aria-label="Show Area Codes">‹</button>
+        <div class="carousel-title-wrap">
+          <button class="carousel-title" id="homeTitle" type="button">Area Codes</button>
+        </div>
+        <button class="carousel-arrow" id="homeNext" type="button" aria-label="Show States">›</button>
+      </div>
+      <p class="home-note" id="homeNote">Select Area Codes to choose a play mode.</p>
+    </div>
+  </section>
+
+  <section class="view hidden" id="modeView" aria-label="Area Codes mode selection">
+    <div class="mode-card">
+      <div class="mode-kicker">Area Codes</div>
+      <h2>Choose a mode</h2>
+      <div class="mode-buttons">
+        <button class="mode-btn" id="trainingModeBtn" type="button">Training</button>
+        <button class="mode-btn" id="challengeModeBtn" type="button">Challenge</button>
+      </div>
+      <button class="back-btn" id="modeBackBtn" type="button">Back to games</button>
+    </div>
+  </section>
+
+  <section class="view hidden" id="statesView" aria-label="States placeholder">
+    <div class="states-card">
+      <div class="states-map-shell">
+        <svg id="statesSvg" viewBox="0 0 780 760" role="img" aria-label="Brazil states map"></svg>
+      </div>
+      <div>
+        <div class="mode-kicker">States</div>
+        <h2>States map</h2>
+        <p>This placeholder shows Brazil's states for the future States game. Gameplay has not been added yet.</p>
+        <button class="back-btn" id="statesBackBtn" type="button">Back to games</button>
+      </div>
+    </div>
+  </section>
+
+  <header class="game-ui hidden">
     <h1><span class="small">Correios &amp; Telefonia · Atlas do Brasil</span>DDD Area Code Atlas</h1>
     <div class="legend-tag">67 regions · <span id="progressTag">0 / 0 solved</span></div>
   </header>
 
-  <div class="prompt-bar">
+  <div class="prompt-bar game-ui hidden">
     <div class="prompt-text" id="promptText">Loading map…</div>
     <div class="feedback" id="feedback"></div>
   </div>
 
-  <div class="zoom-controls">
+  <div class="zoom-controls game-ui hidden">
     <button class="zoom-btn" id="zoomIn" title="Zoom in">+</button>
     <button class="zoom-btn" id="zoomOut" title="Zoom out">–</button>
     <button class="zoom-btn" id="zoomReset" title="Reset view">⤾</button>
   </div>
 
-  <button class="sidebar-toggle" id="sidebarToggle" title="Hide/show panel">✕</button>
+  <button class="sidebar-toggle game-ui hidden" id="sidebarToggle" title="Hide/show panel">✕</button>
 
-  <div class="sidebar" id="sidebar">
+  <div class="sidebar game-ui hidden" id="sidebar">
     <div class="panel">
       <h2>Score</h2>
       <div class="score-grid">
-        <div class="score-cell"><span class="num" id="scoreCorrect">0</span><span class="lbl">Correct</span></div>
-        <div class="score-cell"><span class="num" id="scoreTotal">0</span><span class="lbl">Asked</span></div>
-        <div class="score-cell"><span class="num" id="scoreStreak">0</span><span class="lbl">Streak</span></div>
+        <div class="score-cell"><span class="num" id="scoreCorrect">0</span><span class="lbl" id="scoreCorrectLabel">Correct</span></div>
+        <div class="score-cell"><span class="num" id="scoreTotal">0</span><span class="lbl" id="scoreTotalLabel">Asked</span></div>
+        <div class="score-cell"><span class="num" id="scoreStreak">0</span><span class="lbl" id="scoreStreakLabel">Streak</span></div>
       </div>
       <button class="wide primary" id="newGameBtn">Restart game</button>
+    </div>
+
+    <div class="panel challenge-only hidden" id="challengePanel">
+      <h2>Challenge Timer</h2>
+      <div class="time-limit-control">
+        <div class="time-limit-readout"><span>Time limit</span><strong id="timeLimitLabel">1:00</strong></div>
+        <input type="range" id="timeLimitSlider" min="0" max="100" value="50" step="1" aria-label="Challenge time limit">
+        <div class="time-limit-readout"><span>Remaining</span><strong id="timerLabel">1:00</strong></div>
+      </div>
     </div>
 
     <div class="panel">
@@ -329,23 +531,25 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h2>Map display</h2>
-      <div class="reveal-toggle">
-        <span>Unique colors per group</span>
-        <label class="switch"><input type="checkbox" id="colorToggle" checked><span class="slider"></span></label>
+    <div class="panel training-only" id="difficultyPanel">
+      <h2>Difficulty</h2>
+      <div class="difficulty-buttons" role="group" aria-label="Training difficulty">
+        <button class="difficulty-btn selected" data-difficulty="easy" type="button">Easy</button>
+        <button class="difficulty-btn" data-difficulty="medium" type="button">Medium</button>
+        <button class="difficulty-btn" data-difficulty="hard" type="button">Hard</button>
+        <button class="difficulty-btn" data-difficulty="custom" type="button">Custom</button>
       </div>
-      <div class="reveal-toggle">
+      <div class="reveal-toggle" id="borderToggleRow">
         <span>Area code borders</span>
         <label class="switch"><input type="checkbox" id="borderToggle" checked><span class="slider"></span></label>
       </div>
-      <div class="reveal-toggle">
-        <span>Emphasize state borders</span>
-        <label class="switch"><input type="checkbox" id="stateToggle"><span class="slider"></span></label>
+      <div class="reveal-toggle" id="colorToggleRow">
+        <span>Unique colors</span>
+        <label class="switch"><input type="checkbox" id="colorToggle" checked><span class="slider"></span></label>
       </div>
-      <div class="reveal-toggle">
-        <span>Reveal all DDDs</span>
-        <label class="switch"><input type="checkbox" id="revealToggle"><span class="slider"></span></label>
+      <div class="reveal-toggle" id="revealToggleRow">
+        <span>Reveal found codes</span>
+        <label class="switch"><input type="checkbox" id="revealToggle" checked><span class="slider"></span></label>
       </div>
       <div class="streak-note">Solved codes drop out of the question pool — each one is asked once per game.</div>
     </div>
@@ -409,6 +613,7 @@ let dddBounds = null;
 let dddLabelOverlay = null;
 let dddFlashState = new Map();
 let mapReadyForClicks = false;
+var currentMode = 'training';
 
 function extendBoundsFromGeometry(bounds, geometry){
   const type = geometry.type;
@@ -493,15 +698,28 @@ function styleForFeature(feature){
 
   const ddd = Number(feature.getProperty('ddd'));
   const group = digitGroupOf(ddd);
+  const enabled = enabledDigits.has(group);
+  const challengeVisualsLocked = currentMode === 'challenge';
+  if(challengeVisualsLocked){
+    return {
+      fillColor: '#ffffff',
+      fillOpacity: 0,
+      strokeColor: '#ffffff',
+      strokeOpacity: 0,
+      strokeWeight: 0,
+      visible: true,
+      clickable: true,
+      zIndex: 1
+    };
+  }
   const flashStyle = dddFlashState.get(ddd);
   if(flashStyle) return flashStyle;
-
-  const enabled = enabledDigits.has(group);
-  const bordersOn = borderToggle.checked;
+  const bordersOn = !challengeVisualsLocked && borderToggle.checked;
+  const colorsOn = !challengeVisualsLocked && colorToggle.checked;
   if(!bordersOn){
     return {
-      fillColor: colorToggle.checked ? (GROUP_COLORS[group] || '#cbb98c') : '#cbb98c',
-      fillOpacity: colorToggle.checked ? 0.24 : 0.18,
+      fillColor: colorsOn ? (GROUP_COLORS[group] || '#cbb98c') : '#cbb98c',
+      fillOpacity: colorsOn ? 0.24 : 0.18,
       strokeColor: '#000000',
       strokeOpacity: 0,
       strokeWeight: 0,
@@ -510,10 +728,10 @@ function styleForFeature(feature){
       zIndex: 1
     };
   }
-  const fillColor = colorToggle.checked ? (GROUP_COLORS[group] || '#cbb98c') : '#cbb98c';
+  const fillColor = colorsOn ? (GROUP_COLORS[group] || '#cbb98c') : '#cbb98c';
   return {
     fillColor,
-    fillOpacity: colorToggle.checked ? (enabled ? 0.38 : 0.16) : (enabled ? 0.24 : 0.12),
+    fillOpacity: colorsOn ? (enabled ? 0.38 : 0.16) : (enabled ? 0.24 : 0.12),
     strokeColor: '#000000',
     strokeOpacity: enabled ? 0.95 : 0.45,
     strokeWeight: enabled ? 1.15 : 0.8,
@@ -534,7 +752,7 @@ function applyRegionStyles(){
 function refreshLabelVisibility(){
   Object.entries(regionEls).forEach(([ddd, el]) => {
     if(!el.label) return;
-    el.label.classList.toggle('show', revealToggle.checked || solved.has(Number(ddd)));
+    el.label.classList.toggle('show', currentMode !== 'challenge' && revealToggle.checked && solved.has(Number(ddd)));
   });
 }
 
@@ -577,7 +795,7 @@ function getDddLabelOverlayClass(){
         const point = projection.fromLatLngToDivPixel(item.anchor);
         item.el.style.left = `${point.x}px`;
         item.el.style.top = `${point.y}px`;
-        item.el.classList.toggle('show', revealToggle.checked || solved.has(item.ddd));
+        item.el.classList.toggle('show', currentMode !== 'challenge' && revealToggle.checked && solved.has(item.ddd));
       }
     }
 
@@ -613,9 +831,10 @@ async function loadDddGeoJson(){
     const ddd = Number(f.properties.description);
     const feature = featureByDdd.get(ddd);
     const anchor = geometryAnchor(f.geometry);
-    if(anchor) items.push({ ddd, anchor: new google.maps.LatLng(anchor.lat, anchor.lng) });
+    const latLngAnchor = anchor ? new google.maps.LatLng(anchor.lat, anchor.lng) : null;
+    if(latLngAnchor) items.push({ ddd, anchor: latLngAnchor });
     extendBoundsFromGeometry(dddBounds, f.geometry);
-    regionEls[ddd] = { feature, uf: DDD_META[ddd], label: null };
+    regionEls[ddd] = { feature, uf: DDD_META[ddd], label: null, anchor: latLngAnchor, geometry: f.geometry };
   });
 
   const OverlayClass = getDddLabelOverlayClass();
@@ -630,7 +849,7 @@ async function loadDddGeoJson(){
     mapReadyForClicks = true;
     window.map.data.addListener('click', (event) => {
       if(event.feature.getProperty('kind') !== 'ddd') return;
-      onRegionClick(Number(event.feature.getProperty('ddd')));
+      onRegionClick(Number(event.feature.getProperty('ddd')), event.latLng);
     });
   }
   progressTag.textContent = `0 / ${DATA.regions.length} solved`;
@@ -672,15 +891,49 @@ const progressTag = document.getElementById('progressTag');
 const scoreCorrectEl = document.getElementById('scoreCorrect');
 const scoreTotalEl = document.getElementById('scoreTotal');
 const scoreStreakEl = document.getElementById('scoreStreak');
+const scoreCorrectLabelEl = document.getElementById('scoreCorrectLabel');
+const scoreTotalLabelEl = document.getElementById('scoreTotalLabel');
+const scoreStreakLabelEl = document.getElementById('scoreStreakLabel');
 const digitGroupsEl = document.getElementById('digitGroups');
 const revealToggle = document.getElementById('revealToggle');
-const stateToggle = document.getElementById('stateToggle');
+const colorToggle = document.getElementById('colorToggle');
+const borderToggle = document.getElementById('borderToggle');
+const borderToggleRow = document.getElementById('borderToggleRow');
+const colorToggleRow = document.getElementById('colorToggleRow');
+const revealToggleRow = document.getElementById('revealToggleRow');
+const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+const difficultyPanel = document.getElementById('difficultyPanel');
+const challengePanel = document.getElementById('challengePanel');
+const timeLimitSlider = document.getElementById('timeLimitSlider');
+const timeLimitLabel = document.getElementById('timeLimitLabel');
+const timerLabel = document.getElementById('timerLabel');
+const homeView = document.getElementById('homeView');
+const modeView = document.getElementById('modeView');
+const statesView = document.getElementById('statesView');
+const homeTitle = document.getElementById('homeTitle');
+const homePrev = document.getElementById('homePrev');
+const homeNext = document.getElementById('homeNext');
+const homeNote = document.getElementById('homeNote');
+const gameUiEls = document.querySelectorAll('.game-ui');
 
-let score = {correct:0, total:0, streak:0};
+let score = {correct:0, total:0, streak:0, points:0, lastPoints:0};
 let solved = new Set();
 let enabledDigits = new Set();
 let currentTarget = null;
 let regionEls = {};
+let currentView = 'home';
+let selectedHomeGame = 'areaCodes';
+let titleAnimating = false;
+let challengeTimerId = null;
+let challengeEndsAt = null;
+let challengeExpired = false;
+let savedTrainingSettings = null;
+
+const DIFFICULTY_SETTINGS = {
+  easy: { borders: true, colors: true, reveal: true },
+  medium: { borders: true, colors: false, reveal: true },
+  hard: { borders: false, colors: false, reveal: false }
+};
 
 const STATE_NAMES = {
   AC:'Acre', AL:'Alagoas', AM:'Amazonas', AP:'Amapá', BA:'Bahia', CE:'Ceará',
@@ -690,6 +943,110 @@ const STATE_NAMES = {
   RN:'Rio Grande do Norte', RO:'Rondônia', RR:'Roraima', RS:'Rio Grande do Sul',
   SC:'Santa Catarina', SE:'Sergipe', SP:'São Paulo', TO:'Tocantins'
 };
+
+function showView(view){
+  currentView = view;
+  homeView.classList.toggle('hidden', view !== 'home');
+  modeView.classList.toggle('hidden', view !== 'modes');
+  statesView.classList.toggle('hidden', view !== 'states');
+  gameUiEls.forEach(el => el.classList.toggle('hidden', view !== 'game'));
+  if(view === 'states') buildStatesPlaceholder();
+  if(view === 'game'){
+    if(dddBounds && window.map) window.map.fitBounds(dddBounds, 32);
+    if(currentTarget === null) nextQuestion();
+  } else {
+    stopChallengeTimer();
+  }
+}
+
+function setVisualControlsLocked(locked){
+  [borderToggle, colorToggle, revealToggle].forEach(toggle => { toggle.disabled = locked; });
+  [borderToggleRow, colorToggleRow, revealToggleRow].forEach(row => {
+    if(row) row.classList.toggle('disabled', locked);
+  });
+}
+
+function applyModeUi(){
+  const challenge = currentMode === 'challenge';
+  difficultyPanel.classList.toggle('hidden', challenge);
+  challengePanel.classList.toggle('hidden', !challenge);
+  setVisualControlsLocked(challenge);
+  scoreCorrectLabelEl.textContent = challenge ? 'Points' : 'Correct';
+  scoreTotalLabelEl.textContent = challenge ? 'Guesses' : 'Asked';
+  scoreStreakLabelEl.textContent = challenge ? 'Last' : 'Streak';
+}
+
+function enterTrainingMode(){
+  currentMode = 'training';
+  if(savedTrainingSettings){
+    borderToggle.checked = savedTrainingSettings.borders;
+    colorToggle.checked = savedTrainingSettings.colors;
+    revealToggle.checked = savedTrainingSettings.reveal;
+  }
+  challengeExpired = false;
+  stopChallengeTimer();
+  applyModeUi();
+  refreshDifficultySelection();
+  restartGame();
+  showView('game');
+}
+
+function enterChallengeMode(){
+  if(currentMode !== 'challenge'){
+    savedTrainingSettings = {
+      borders: borderToggle.checked,
+      colors: colorToggle.checked,
+      reveal: revealToggle.checked
+    };
+  }
+  currentMode = 'challenge';
+  borderToggle.checked = false;
+  colorToggle.checked = false;
+  revealToggle.checked = false;
+  applyModeUi();
+  restartGame();
+  showView('game');
+}
+
+function refreshHomeCarousel(){
+  const isStates = selectedHomeGame === 'states';
+  homeTitle.textContent = isStates ? 'States' : 'Area Codes';
+  homePrev.classList.toggle('invisible', !isStates);
+  homeNext.classList.toggle('invisible', isStates);
+  homeNote.textContent = isStates
+    ? 'Select States to preview the future states map.'
+    : 'Select Area Codes to choose a play mode.';
+}
+
+function switchHomeGame(nextGame){
+  if(titleAnimating || selectedHomeGame === nextGame) return;
+  titleAnimating = true;
+  const toStates = nextGame === 'states';
+  homeTitle.classList.remove('slide-in-left', 'slide-in-right', 'slide-out-left', 'slide-out-right');
+  homeTitle.classList.add(toStates ? 'slide-out-left' : 'slide-out-right');
+  setTimeout(() => {
+    selectedHomeGame = nextGame;
+    refreshHomeCarousel();
+    homeTitle.classList.remove('slide-out-left', 'slide-out-right');
+    homeTitle.classList.add(toStates ? 'slide-in-right' : 'slide-in-left');
+    setTimeout(() => {
+      homeTitle.classList.remove('slide-in-left', 'slide-in-right');
+      titleAnimating = false;
+    }, 230);
+  }, 160);
+}
+
+function buildStatesPlaceholder(){
+  const svgRoot = document.getElementById('statesSvg');
+  if(!svgRoot || svgRoot.children.length) return;
+  STATES.states.forEach(state => {
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', state.path);
+    path.setAttribute('class', 'state-shape');
+    path.setAttribute('aria-label', state.name);
+    svgRoot.appendChild(path);
+  });
+}
 
 let DddOverlayClass = null;
 
@@ -713,8 +1070,215 @@ const STRONG_STATE_BORDER_STYLES = [
 
 function applyStateBorderStyle(){
   if(!window.map) return;
-  const toggle = document.getElementById('stateToggle');
-  window.map.setOptions({ styles: toggle && toggle.checked ? STRONG_STATE_BORDER_STYLES : DEFAULT_MAP_STYLES });
+  window.map.setOptions({ styles: DEFAULT_MAP_STYLES });
+}
+
+function selectedDifficultyForSettings(){
+  const current = {
+    borders: borderToggle.checked,
+    colors: colorToggle.checked,
+    reveal: revealToggle.checked
+  };
+  const match = Object.entries(DIFFICULTY_SETTINGS).find(([, settings]) => (
+    settings.borders === current.borders &&
+    settings.colors === current.colors &&
+    settings.reveal === current.reveal
+  ));
+  return match ? match[0] : 'custom';
+}
+
+function illuminateDifficulty(name){
+  difficultyButtons.forEach(button => {
+    const selected = button.dataset.difficulty === name;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  });
+}
+
+function refreshDifficultySelection(){
+  illuminateDifficulty(selectedDifficultyForSettings());
+}
+
+function applyTrainingSettings(settings){
+  borderToggle.checked = settings.borders;
+  colorToggle.checked = settings.colors;
+  revealToggle.checked = settings.reveal;
+  applyRegionStyles();
+  refreshLabelVisibility();
+}
+
+function applyDifficulty(name){
+  if(name === 'custom'){
+    refreshDifficultySelection();
+    return;
+  }
+  applyTrainingSettings(DIFFICULTY_SETTINGS[name]);
+  illuminateDifficulty(name);
+}
+
+function sliderValueToSeconds(value){
+  const v = Number(value);
+  if(v >= 100) return Infinity;
+  if(v <= 50) return Math.round(Math.exp(Math.log(60) * (v / 50)));
+  return Math.round(60 * Math.exp(Math.log(120) * ((v - 50) / 49)));
+}
+
+function formatDuration(seconds){
+  if(!Number.isFinite(seconds)) return 'Untimed';
+  const whole = Math.max(0, Math.ceil(seconds));
+  const minutes = Math.floor(whole / 60);
+  const secs = whole % 60;
+  if(minutes >= 60){
+    const hours = Math.floor(minutes / 60);
+    const remMinutes = minutes % 60;
+    return `${hours}:${String(remMinutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+  return `${minutes}:${String(secs).padStart(2, '0')}`;
+}
+
+function selectedTimeLimitSeconds(){
+  return sliderValueToSeconds(timeLimitSlider.value);
+}
+
+function refreshTimeLimitLabel(){
+  const seconds = selectedTimeLimitSeconds();
+  timeLimitLabel.textContent = formatDuration(seconds);
+  if(!challengeEndsAt) timerLabel.textContent = formatDuration(seconds);
+}
+
+function stopChallengeTimer(){
+  if(challengeTimerId){
+    clearInterval(challengeTimerId);
+    challengeTimerId = null;
+  }
+  challengeEndsAt = null;
+}
+
+function expireChallenge(){
+  challengeExpired = true;
+  currentTarget = null;
+  stopChallengeTimer();
+  timerLabel.textContent = '0:00';
+  promptText.textContent = 'Time is up. Restart to play again.';
+  feedback.textContent = `Final score: ${score.points} points from ${score.total} guesses.`;
+  feedback.className = 'feedback wrong';
+}
+
+function updateChallengeTimer(){
+  if(currentMode !== 'challenge' || !challengeEndsAt) return;
+  const remaining = Math.max(0, (challengeEndsAt - Date.now()) / 1000);
+  timerLabel.textContent = formatDuration(remaining);
+  if(remaining <= 0) expireChallenge();
+}
+
+function startChallengeTimer(){
+  stopChallengeTimer();
+  challengeExpired = false;
+  const seconds = selectedTimeLimitSeconds();
+  timerLabel.textContent = formatDuration(seconds);
+  if(!Number.isFinite(seconds)) return;
+  challengeEndsAt = Date.now() + seconds * 1000;
+  updateChallengeTimer();
+  challengeTimerId = setInterval(updateChallengeTimer, 250);
+}
+
+function haversineKm(a, b){
+  if(!a || !b) return 3000;
+  const aLat = typeof a.lat === 'function' ? a.lat() : a.lat;
+  const aLng = typeof a.lng === 'function' ? a.lng() : a.lng;
+  const bLat = typeof b.lat === 'function' ? b.lat() : b.lat;
+  const bLng = typeof b.lng === 'function' ? b.lng() : b.lng;
+  const toRad = deg => deg * Math.PI / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const lat1 = toRad(aLat);
+  const lat2 = toRad(bLat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function latLngPoint(point){
+  if(!point) return null;
+  return {
+    lat: typeof point.lat === 'function' ? point.lat() : point.lat,
+    lng: typeof point.lng === 'function' ? point.lng() : point.lng
+  };
+}
+
+function segmentDistanceKm(point, start, end){
+  const latScale = 111.32;
+  const lngScale = 111.32 * Math.cos(point.lat * Math.PI / 180);
+  const ax = (start[0] - point.lng) * lngScale;
+  const ay = (start[1] - point.lat) * latScale;
+  const bx = (end[0] - point.lng) * lngScale;
+  const by = (end[1] - point.lat) * latScale;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lengthSq = dx * dx + dy * dy;
+  if(!lengthSq) return Math.sqrt(ax * ax + ay * ay);
+  const t = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSq));
+  const x = ax + dx * t;
+  const y = ay + dy * t;
+  return Math.sqrt(x * x + y * y);
+}
+
+function ringDistanceKm(point, ring){
+  if(!ring || ring.length === 0) return Infinity;
+  let min = Infinity;
+  for(let i = 0; i < ring.length - 1; i++){
+    min = Math.min(min, segmentDistanceKm(point, ring[i], ring[i + 1]));
+  }
+  if(ring.length === 1) min = segmentDistanceKm(point, ring[0], ring[0]);
+  return min;
+}
+
+function geometryDistanceKm(point, geometry){
+  const guessPoint = latLngPoint(point);
+  if(!guessPoint || !geometry) return Infinity;
+  let min = Infinity;
+  if(geometry.type === 'Polygon'){
+    geometry.coordinates.forEach(ring => { min = Math.min(min, ringDistanceKm(guessPoint, ring)); });
+  } else if(geometry.type === 'MultiPolygon'){
+    geometry.coordinates.forEach(polygon => {
+      polygon.forEach(ring => { min = Math.min(min, ringDistanceKm(guessPoint, ring)); });
+    });
+  }
+  return min;
+}
+
+function challengeScoreForGuess(clickedDdd, clickLatLng){
+  if(clickedDdd === currentTarget) return 5000;
+  const clickedInfo = regionEls[clickedDdd] || {};
+  const targetInfo = regionEls[currentTarget] || {};
+  const guessPoint = clickLatLng || clickedInfo.anchor;
+  const boundaryDistanceKm = geometryDistanceKm(guessPoint, targetInfo.geometry);
+  const distanceKm = Number.isFinite(boundaryDistanceKm) ? boundaryDistanceKm : haversineKm(guessPoint, targetInfo.anchor);
+  if(distanceKm >= 2500) return 0;
+  return Math.round(5000 * Math.exp(-distanceKm / 360));
+}
+
+function svgClickLatLng(event, svgRoot){
+  if(!event || !svgRoot) return null;
+  const overlay = svgRoot.__dddOverlay;
+  const projection = overlay && overlay.getProjection && overlay.getProjection();
+  if(projection && overlay.container && window.google && google.maps && google.maps.Point){
+    const rect = overlay.container.getBoundingClientRect();
+    const left = parseFloat(overlay.container.style.left) || 0;
+    const top = parseFloat(overlay.container.style.top) || 0;
+    const point = new google.maps.Point(left + event.clientX - rect.left, top + event.clientY - rect.top);
+    return projection.fromDivPixelToLatLng(point);
+  }
+  if(!svgRoot.createSVGPoint) return null;
+  const matrix = svgRoot.getScreenCTM();
+  if(!matrix) return null;
+  const point = svgRoot.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+  const svgPoint = point.matrixTransform(matrix.inverse());
+  const lng = BRAZIL_BOUNDS.west + (svgPoint.x / DATA.width) * (BRAZIL_BOUNDS.east - BRAZIL_BOUNDS.west);
+  const lat = BRAZIL_BOUNDS.north - (svgPoint.y / DATA.height) * (BRAZIL_BOUNDS.north - BRAZIL_BOUNDS.south);
+  if(window.google && google.maps && google.maps.LatLng) return new google.maps.LatLng(lat, lng);
+  return {lat, lng};
 }
 
 function getDddOverlayClass(){
@@ -745,6 +1309,7 @@ function getDddOverlayClass(){
       this.getPanes().overlayMouseTarget.appendChild(this.container);
 
       svg = this.svg;
+      this.svg.__dddOverlay = this;
       buildMap(this.svg);
       buildDigitGroups();
       refreshDisabledStyling();
@@ -807,7 +1372,10 @@ function buildMap(svgRoot){
     path.setAttribute('data-ddd', r.ddd);
     path.setAttribute('data-uf', r.uf);
     path.setAttribute('pointer-events', 'all');
-    path.addEventListener('click', () => onRegionClick(r.ddd));
+    path.addEventListener('click', (event) => {
+      const clickLatLng = currentMode === 'challenge' ? svgClickLatLng(event, svgRoot) : undefined;
+      onRegionClick(r.ddd, clickLatLng);
+    });
     regionLayer.appendChild(path);
 
     const label = document.createElementNS(svgNS,'text');
@@ -875,11 +1443,17 @@ function activeDDDs(){
 function nextQuestion(){
   feedback.textContent = '';
   feedback.className = 'feedback';
+  if(currentMode === 'challenge' && challengeExpired){
+    promptText.textContent = 'Time is up. Restart to play again.';
+    currentTarget = null;
+    return;
+  }
   const pool = activeDDDs();
   if(pool.length === 0){
     const anyEnabled = enabledDigits.size > 0;
+    if(currentMode === 'challenge' && anyEnabled) stopChallengeTimer();
     promptText.textContent = anyEnabled
-      ? 'All active codes solved! Enable more groups or restart.'
+      ? (currentMode === 'challenge' ? 'Challenge complete. Restart to play again.' : 'All active codes solved! Enable more groups or restart.')
       : 'Enable at least one code group to play.';
     currentTarget = null;
     return;
@@ -889,15 +1463,16 @@ function nextQuestion(){
 }
 
 function flash(ddd, cls, duration){
+  if(currentMode === 'challenge') return;
   const featureInfo = regionEls[ddd];
   if(!featureInfo || !featureInfo.feature) return;
-  dddFlashState.set(ddd, cls === 'correct-flash' ? {
+  const flashStyle = cls === 'correct-flash' ? {
     fillColor: '#6fe08a', fillOpacity: 1, strokeColor: '#6fe08a', strokeOpacity: 1, strokeWeight: 1.25, visible: true, clickable: true, zIndex: 2
   } : cls === 'wrong-flash' ? {
     fillColor: '#e4572e', fillOpacity: 1, strokeColor: '#e4572e', strokeOpacity: 1, strokeWeight: 1.25, visible: true, clickable: true, zIndex: 2
-  } : {
-    fillColor: '#d4a24c', fillOpacity: 1, strokeColor: '#d4a24c', strokeOpacity: 1, strokeWeight: 1.25, visible: true, clickable: true, zIndex: 2
-  });
+  } : null;
+  if(!flashStyle) return;
+  dddFlashState.set(ddd, flashStyle);
   applyRegionStyles();
   setTimeout(()=>{
     dddFlashState.delete(ddd);
@@ -912,10 +1487,29 @@ function markSolved(ddd){
   progressTag.textContent = `${solved.size} / ${DATA.regions.length} solved`;
 }
 
-function onRegionClick(clickedDdd){
+function onRegionClick(clickedDdd, clickLatLng){
+  if(currentView !== 'game') return;
   if(currentTarget === null) return;
+  if(currentMode === 'challenge' && challengeExpired) return;
   score.total++;
   const uf = regionEls[clickedDdd].uf;
+  if(currentMode === 'challenge'){
+    const roundPoints = challengeScoreForGuess(clickedDdd, clickLatLng);
+    score.points += roundPoints;
+    score.lastPoints = roundPoints;
+    if(clickedDdd === currentTarget) score.correct++;
+    const targetUf = regionEls[currentTarget].uf;
+    const wasCorrect = clickedDdd === currentTarget;
+    feedback.textContent = wasCorrect
+      ? `Correct — DDD ${currentTarget} (${STATE_NAMES[uf]||uf}) for 5000 points`
+      : `${roundPoints} points — guessed DDD ${clickedDdd}. Target was ${currentTarget} (${STATE_NAMES[targetUf]||targetUf})`;
+    feedback.className = wasCorrect ? 'feedback correct' : 'feedback wrong';
+    flash(clickedDdd, wasCorrect ? 'correct-flash' : 'wrong-flash', 650);
+    markSolved(currentTarget);
+    updateScore();
+    setTimeout(nextQuestion, wasCorrect ? 750 : 1250);
+    return;
+  }
   if(clickedDdd === currentTarget){
     score.correct++;
     score.streak++;
@@ -928,45 +1522,65 @@ function onRegionClick(clickedDdd){
   } else {
     score.streak = 0;
     const targetUf = regionEls[currentTarget].uf;
-    feedback.textContent = `Not quite — that's DDD ${clickedDdd}. Target was ${currentTarget} (${STATE_NAMES[targetUf]||targetUf})`;
+    feedback.textContent = revealToggle.checked
+      ? `Not quite — that's DDD ${clickedDdd}. Target was ${currentTarget} (${STATE_NAMES[targetUf]||targetUf})`
+      : `Not quite — that's DDD ${clickedDdd}. Try the next prompt.`;
     feedback.className = 'feedback wrong';
     flash(clickedDdd, 'wrong-flash', 700);
-    flash(currentTarget, 'target-reveal', 1300);
     updateScore();
     setTimeout(nextQuestion, 1400);
   }
 }
 
 function updateScore(){
-  scoreCorrectEl.textContent = score.correct;
+  scoreCorrectEl.textContent = currentMode === 'challenge' ? score.points : score.correct;
   scoreTotalEl.textContent = score.total;
-  scoreStreakEl.textContent = score.streak;
+  scoreStreakEl.textContent = currentMode === 'challenge' ? score.lastPoints : score.streak;
 }
 
 function restartGame(){
-  score = {correct:0, total:0, streak:0};
+  score = {correct:0, total:0, streak:0, points:0, lastPoints:0};
   solved = new Set();
   dddFlashState = new Map();
+  challengeExpired = false;
   refreshLabelVisibility();
   applyRegionStyles();
   progressTag.textContent = `0 / ${DATA.regions.length} solved`;
   updateScore();
   nextQuestion();
+  if(currentMode === 'challenge') startChallengeTimer();
 }
+
+homeNext.addEventListener('click', () => switchHomeGame('states'));
+homePrev.addEventListener('click', () => switchHomeGame('areaCodes'));
+homeTitle.addEventListener('click', () => {
+  showView(selectedHomeGame === 'states' ? 'states' : 'modes');
+});
+document.getElementById('modeBackBtn').addEventListener('click', () => showView('home'));
+document.getElementById('statesBackBtn').addEventListener('click', () => showView('home'));
+document.getElementById('trainingModeBtn').addEventListener('click', enterTrainingMode);
+document.getElementById('challengeModeBtn').addEventListener('click', enterChallengeMode);
 
 revealToggle.addEventListener('change', ()=>{
   refreshLabelVisibility();
+  refreshDifficultySelection();
 });
-stateToggle.addEventListener('change', ()=>{
-  applyStateBorderStyle();
-});
-const colorToggle = document.getElementById('colorToggle');
-const borderToggle = document.getElementById('borderToggle');
 colorToggle.addEventListener('change', ()=>{
   applyRegionStyles();
+  refreshDifficultySelection();
 });
 borderToggle.addEventListener('change', ()=>{
   applyRegionStyles();
+  refreshDifficultySelection();
+});
+difficultyButtons.forEach(button => {
+  button.addEventListener('click', () => applyDifficulty(button.dataset.difficulty));
+});
+refreshDifficultySelection();
+refreshTimeLimitLabel();
+timeLimitSlider.addEventListener('input', ()=>{
+  refreshTimeLimitLabel();
+  if(currentMode === 'challenge' && currentView === 'game') startChallengeTimer();
 });
 
 const sidebarEl = document.getElementById('sidebar');
