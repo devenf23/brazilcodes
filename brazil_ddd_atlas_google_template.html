@@ -456,6 +456,36 @@
     font-size: 14px;
     line-height: 1.5;
   }
+  .results-map-shell{
+    min-height: 420px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(242,236,217,0.12);
+    background: rgba(8,26,36,0.28);
+  }
+  .results-map{
+    width: 100%;
+    height: 420px;
+  }
+  .results-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 14px;
+    margin: 10px 0 0;
+    color: var(--fog);
+    font-size: 13px;
+  }
+  .results-legend span{
+    display:inline-flex;
+    align-items:center;
+    gap: 7px;
+  }
+  .results-dot{
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    display:inline-block;
+  }
   .results-empty{
     margin:0;
     color: var(--fog);
@@ -1132,6 +1162,8 @@ let gameEnded = false;
 let challengeRoundResults = [];
 let trainingMisses = [];
 let trainingStatesSeen = new Set();
+let challengeEndMap = null;
+let challengeEndMapOverlays = [];
 
 const DIFFICULTY_SETTINGS = {
   easy: { borders: true, colors: true, reveal: true },
@@ -1538,6 +1570,8 @@ function challengeResultForGuess(clickedDdd, clickLatLng){
   const targetInfo = regionEls[currentTarget] || {};
   const correct = clickedDdd === currentTarget;
   const guessPoint = clickLatLng || clickedInfo.anchor;
+  const clickedPoint = latLngPoint(guessPoint);
+  const targetPoint = latLngPoint(targetInfo.anchor);
   const boundaryDistanceKm = correct ? 0 : geometryDistanceKm(guessPoint, targetInfo.geometry);
   const distanceKm = correct
     ? 0
@@ -1549,6 +1583,8 @@ function challengeResultForGuess(clickedDdd, clickLatLng){
     distanceKm,
     target: currentTarget,
     clicked: clickedDdd,
+    clickedPoint,
+    targetPoint,
     targetUf: targetInfo.uf,
     clickedUf: clickedInfo.uf
   };
@@ -1864,8 +1900,110 @@ function renderStateChips(container, states){
   container.appendChild(list);
 }
 
+function clearChallengeEndMapOverlays(){
+  challengeEndMapOverlays.forEach(overlay => {
+    if(overlay && overlay.setMap) overlay.setMap(null);
+  });
+  challengeEndMapOverlays = [];
+}
+
+function renderChallengeMissMap(container, rounds){
+  container.textContent = '';
+  clearChallengeEndMapOverlays();
+  challengeEndMap = null;
+
+  const mapShell = document.createElement('div');
+  mapShell.className = 'results-map-shell';
+  const mapEl = document.createElement('div');
+  mapEl.className = 'results-map';
+  mapShell.appendChild(mapEl);
+  container.appendChild(mapShell);
+
+  const legend = document.createElement('p');
+  legend.className = 'results-legend';
+  legend.innerHTML = '<span><i class="results-dot" style="background:#e4572e"></i>Your guess</span><span><i class="results-dot" style="background:#d4a24c"></i>Target zone</span>';
+  container.appendChild(legend);
+
+  if(!window.google || !google.maps || !google.maps.Map){
+    const empty = document.createElement('p');
+    empty.className = 'results-empty';
+    empty.textContent = 'Google Maps is unavailable.';
+    container.appendChild(empty);
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    challengeEndMap = new google.maps.Map(mapEl, {
+      center: {lat:-14.2, lng:-51.9},
+      zoom: 4,
+      mapTypeId: 'roadmap',
+      streetViewControl: false,
+      fullscreenControl: false,
+      mapTypeControl: false
+    });
+
+    const bounds = new google.maps.LatLngBounds();
+    const missedRounds = rounds.filter(round => !round.correct && round.clickedPoint && round.targetPoint);
+
+    missedRounds.forEach((round, index) => {
+      const label = String(round.roundNumber || (index + 1));
+      const guessMarker = new google.maps.Marker({
+        map: challengeEndMap,
+        position: round.clickedPoint,
+        label,
+        title: `Round ${label} guess: ${formatDddLabel(round.clicked, round.clickedUf)}`,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#e4572e',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+          scale: 8
+        }
+      });
+      const targetMarker = new google.maps.Marker({
+        map: challengeEndMap,
+        position: round.targetPoint,
+        label,
+        title: `Round ${label} target: ${formatDddLabel(round.target, round.targetUf)}`,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#d4a24c',
+          fillOpacity: 1,
+          strokeColor: '#081a24',
+          strokeWeight: 2,
+          scale: 6
+        }
+      });
+      const line = new google.maps.Polyline({
+        map: challengeEndMap,
+        path: [round.clickedPoint, round.targetPoint],
+        strokeColor: '#f2ecd9',
+        strokeOpacity: 0.75,
+        strokeWeight: 2
+      });
+
+      challengeEndMapOverlays.push(guessMarker, targetMarker, line);
+      bounds.extend(round.clickedPoint);
+      bounds.extend(round.targetPoint);
+    });
+
+    if(missedRounds.length){
+      challengeEndMap.fitBounds(bounds, 72);
+    } else {
+      challengeEndMap.setCenter({lat:-14.2, lng:-51.9});
+      challengeEndMap.setZoom(4);
+      const empty = document.createElement('p');
+      empty.className = 'results-empty';
+      empty.textContent = 'Perfect run. No missed guesses to map.';
+      container.appendChild(empty);
+    }
+  });
+}
+
 function renderEndScreen(reason){
   if(currentMode === 'challenge'){
+    const missedRounds = challengeRoundResults.filter(round => !round.correct);
     endTitle.textContent = reason === 'time' ? 'Time is up' : 'Challenge complete';
     endSummary.textContent = `You scored ${score.points.toLocaleString()} points across ${challengeRoundResults.length} rounds.`;
     renderStatCells([
@@ -1873,15 +2011,19 @@ function renderEndScreen(reason){
       { label: 'Rounds', value: String(challengeRoundResults.length) },
       { label: 'Correct', value: String(score.correct) }
     ]);
-    endPrimaryTitle.textContent = 'Round results';
-    renderResultsList(endPrimaryContent, challengeRoundResults.map((round, index) => ({
-      title: `Round ${index + 1} · Target ${formatDddLabel(round.target, round.targetUf)}`,
+    endPrimaryTitle.textContent = 'Missed guesses map';
+    renderChallengeMissMap(endPrimaryContent, challengeRoundResults);
+    endSecondarySection.style.display = '';
+    endSecondaryTitle.textContent = 'Miss breakdown';
+    renderResultsList(endSecondaryContent, missedRounds.map((round, index) => ({
+      title: `Round ${round.roundNumber || (index + 1)} · Target ${formatDddLabel(round.target, round.targetUf)}`,
       body: `Clicked ${formatDddLabel(round.clicked, round.clickedUf)}. Distance: ${formatDistanceKm(round.distanceKm)}. Score: ${round.points.toLocaleString()} points.`
-    })), 'No rounds recorded.');
-    endSecondarySection.style.display = 'none';
+    })), 'Perfect run. No missed rounds.');
     return;
   }
 
+  clearChallengeEndMapOverlays();
+  challengeEndMap = null;
   const trainingStates = [...trainingStatesSeen]
     .map(uf => STATE_NAMES[uf] || uf)
     .sort((a, b) => a.localeCompare(b));
@@ -1908,8 +2050,8 @@ function finishGame(reason){
   currentTarget = null;
   pausedChallengeRemainingMs = null;
   stopChallengeTimer();
-  renderEndScreen(reason);
   showView('end');
+  renderEndScreen(reason);
 }
 
 function pauseCurrentGame(){
@@ -1950,6 +2092,7 @@ function onRegionClick(clickedDdd, clickLatLng){
   const uf = regionEls[clickedDdd].uf;
   if(currentMode === 'challenge'){
     const roundResult = challengeResultForGuess(clickedDdd, clickLatLng);
+    roundResult.roundNumber = score.total;
     score.points += roundResult.points;
     score.lastPoints = roundResult.points;
     if(clickedDdd === currentTarget) score.correct++;
