@@ -122,6 +122,7 @@
   .game-ui.hidden{ display:none; }
   .home-card,
   .mode-card,
+  .config-card,
   .states-card{
     width:min(880px, 100%);
     border:1px solid rgba(212,162,76,0.32);
@@ -181,6 +182,36 @@
   @keyframes titleInRight{ from{ transform:translateX(55%); opacity:0; } to{ transform:translateX(0); opacity:1; } }
   .home-note{ color:var(--fog); font-size:15px; margin:0; text-align:center; }
   .mode-card{ padding: clamp(24px, 4vw, 42px); }
+  .config-card{ padding: clamp(24px, 4vw, 42px); }
+  .config-topline{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap: 16px;
+    flex-wrap:wrap;
+    margin-bottom: 18px;
+  }
+  .config-topline h2{ margin-bottom:0; }
+  .config-mode-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+  }
+  .config-grid{
+    display:grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.78fr);
+    gap: 18px;
+  }
+  .config-stack{
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+  .start-row{ margin-top: 4px; display:flex; justify-content:flex-end; }
+  .start-row button{ min-width: 160px; min-height: 46px; font-size: 14px; }
+  .config-note{ color:var(--fog); font-size:14px; line-height:1.5; margin:0; }
   .mode-card h2,
   .states-card h2{
     font-family:'Fraunces', serif;
@@ -266,22 +297,6 @@
   }
   .zoom-btn:hover{ background: rgba(212,162,76,0.25); }
 
-  .sidebar-toggle{
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 25;
-    width: 34px; height: 34px;
-    border-radius: 6px;
-    border: 1px solid rgba(212,162,76,0.45);
-    background: rgba(12,40,54,0.92);
-    color: var(--gold-bright);
-    font-size: 16px;
-    cursor: pointer;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .sidebar-toggle:hover{ background: rgba(212,162,76,0.25); }
-
   .region{ stroke: rgba(8,26,36,0.75); stroke-width: 0.6; cursor: pointer; transition: filter 0.15s ease, opacity 0.15s ease; fill-opacity: 0.32; }
   .region:hover{ filter: brightness(1.28); }
   .region.disabled-group{ cursor: default; opacity: 0.35; }
@@ -324,26 +339,6 @@
   }
   .region-label.show{ opacity: 1; }
 
-  .sidebar{
-    position: absolute;
-    top: 58px;
-    right: 16px;
-    width: 230px;
-    max-height: calc(100vh - 74px);
-    overflow-y: auto;
-    z-index: 20;
-    background: rgba(18,58,77,0.95);
-    border: 1px solid rgba(212,162,76,0.3);
-    border-radius: 8px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
-    padding: 14px 14px 6px;
-    backdrop-filter: blur(6px);
-    transition: transform 0.25s ease, opacity 0.25s ease;
-  }
-  .sidebar.collapsed{ transform: translateX(16px) scale(0.98); opacity: 0; pointer-events: none; }
-  .sidebar::-webkit-scrollbar{ width: 6px; }
-  .sidebar::-webkit-scrollbar-thumb{ background: rgba(212,162,76,0.4); border-radius: 3px; }
-
   .panel{ padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(242,236,217,0.12); }
   .panel:last-child{ border-bottom: none; margin-bottom: 4px; }
   .panel h2{
@@ -357,7 +352,11 @@
   .panel h2::before{ content:""; width:5px; height:5px; background: var(--gold); display:inline-block; transform: rotate(45deg); }
 
   .score-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 4px; }
+  .score-grid.compact{ width:min(330px, 100%); margin-bottom:0; }
   .score-cell{ text-align:center; background: rgba(242,236,217,0.05); border: 1px solid rgba(242,236,217,0.12); border-radius: 4px; padding: 6px 2px; }
+  .score-grid.compact .score-cell{ padding: 5px 2px; }
+  .score-grid.compact .score-cell .num{ font-size: 15px; }
+  .score-grid.compact .score-cell .lbl{ font-size: 8px; }
   .score-cell .num{ font-family:'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; color: var(--paper); display:block; }
   .score-cell .lbl{ font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fog); }
   .challenge-only.hidden,
@@ -425,6 +424,13 @@
   .time-limit-readout strong{ font-family:'IBM Plex Mono', monospace; color:var(--paper); font-size:15px; }
   .time-limit-control input[type=range]{ width:100%; accent-color: var(--gold); }
 
+  .rounds-control{ display:flex; flex-direction:column; gap: 8px; }
+  .rounds-control input[type=range]{ width:100%; accent-color: var(--gold); }
+
+  .config-mode-note{ margin: 0 0 6px; color: var(--fog); font-size: 14px; line-height: 1.5; }
+
+  .region-label.peek-wrong{ opacity: 1; fill: var(--coral); color: var(--coral); }
+
   .streak-note{ font-size: 10.5px; color: var(--fog); margin-top: 6px; line-height:1.45; }
 
   @media (max-width: 720px){
@@ -470,6 +476,80 @@
     </div>
   </section>
 
+  <section class="view hidden" id="configView" aria-label="Area Codes configuration">
+    <div class="config-card">
+      <div class="config-topline">
+        <div>
+          <div class="config-mode-tag" id="configModeTag">Area Codes</div>
+          <h2>Configure your game</h2>
+        </div>
+        <div>
+          <p class="config-note" id="configModeNote">Choose settings, then start the game.</p>
+          <button class="back-btn" id="configBackBtn" type="button">Back to modes</button>
+        </div>
+      </div>
+
+      <div class="config-grid">
+        <div class="config-stack">
+          <div class="panel challenge-only hidden" id="challengePanel">
+            <h2>Challenge Timer</h2>
+            <div class="time-limit-control">
+              <div class="time-limit-readout"><span>Time limit</span><strong id="timeLimitLabel">1:00</strong></div>
+              <input type="range" id="timeLimitSlider" min="0" max="100" value="50" step="1" aria-label="Challenge time limit">
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Rounds</h2>
+            <div class="rounds-control">
+              <div class="time-limit-readout"><span>Codes to guess</span><strong id="roundsLabel">50</strong></div>
+              <input type="range" id="roundsSlider" min="0" max="100" value="50" step="1" aria-label="Number of rounds">
+              <div class="config-note">Move to the far right for an unlimited game.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-stack">
+          <div class="panel">
+            <h2>Code groups</h2>
+            <div class="digit-groups" id="digitGroups"></div>
+            <div class="group-buttons">
+              <button id="selectAll">All</button>
+              <button id="selectNone">None</button>
+            </div>
+          </div>
+
+          <div class="panel training-only" id="difficultyPanel">
+            <h2>Difficulty</h2>
+            <div class="difficulty-buttons" role="group" aria-label="Training difficulty">
+              <button class="difficulty-btn selected" data-difficulty="easy" type="button">Easy</button>
+              <button class="difficulty-btn" data-difficulty="medium" type="button">Medium</button>
+              <button class="difficulty-btn" data-difficulty="hard" type="button">Hard</button>
+              <button class="difficulty-btn" data-difficulty="custom" type="button">Custom</button>
+            </div>
+            <div class="reveal-toggle" id="borderToggleRow">
+              <span>Area code borders</span>
+              <label class="switch"><input type="checkbox" id="borderToggle" checked><span class="slider"></span></label>
+            </div>
+            <div class="reveal-toggle" id="colorToggleRow">
+              <span>Unique colors</span>
+              <label class="switch"><input type="checkbox" id="colorToggle" checked><span class="slider"></span></label>
+            </div>
+            <div class="reveal-toggle" id="revealToggleRow">
+              <span>Reveal found codes</span>
+              <label class="switch"><input type="checkbox" id="revealToggle" checked><span class="slider"></span></label>
+            </div>
+            <div class="streak-note">Solved codes drop out of the question pool — each one is asked once per game.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="start-row">
+        <button class="primary" id="newGameBtn" type="button">Start game</button>
+      </div>
+    </div>
+  </section>
+
   <section class="view hidden" id="statesView" aria-label="States placeholder">
     <div class="states-card">
       <div class="states-map-shell">
@@ -487,6 +567,12 @@
   <header class="game-ui hidden">
     <h1><span class="small">Correios &amp; Telefonia · Atlas do Brasil</span>DDD Area Code Atlas</h1>
     <div class="legend-tag">67 regions · <span id="progressTag">0 / 0 solved</span></div>
+    <div class="legend-tag challenge-time">Time left · <span id="timerLabel">1:00</span></div>
+    <div class="score-grid compact">
+      <div class="score-cell"><span class="num" id="scoreCorrect">0</span><span class="lbl" id="scoreCorrectLabel">Correct</span></div>
+      <div class="score-cell"><span class="num" id="scoreTotal">0</span><span class="lbl" id="scoreTotalLabel">Asked</span></div>
+      <div class="score-cell"><span class="num" id="scoreStreak">0</span><span class="lbl" id="scoreStreakLabel">Streak</span></div>
+    </div>
   </header>
 
   <div class="prompt-bar game-ui hidden">
@@ -500,60 +586,6 @@
     <button class="zoom-btn" id="zoomReset" title="Reset view">⤾</button>
   </div>
 
-  <button class="sidebar-toggle game-ui hidden" id="sidebarToggle" title="Hide/show panel">✕</button>
-
-  <div class="sidebar game-ui hidden" id="sidebar">
-    <div class="panel">
-      <h2>Score</h2>
-      <div class="score-grid">
-        <div class="score-cell"><span class="num" id="scoreCorrect">0</span><span class="lbl" id="scoreCorrectLabel">Correct</span></div>
-        <div class="score-cell"><span class="num" id="scoreTotal">0</span><span class="lbl" id="scoreTotalLabel">Asked</span></div>
-        <div class="score-cell"><span class="num" id="scoreStreak">0</span><span class="lbl" id="scoreStreakLabel">Streak</span></div>
-      </div>
-      <button class="wide primary" id="newGameBtn">Restart game</button>
-    </div>
-
-    <div class="panel challenge-only hidden" id="challengePanel">
-      <h2>Challenge Timer</h2>
-      <div class="time-limit-control">
-        <div class="time-limit-readout"><span>Time limit</span><strong id="timeLimitLabel">1:00</strong></div>
-        <input type="range" id="timeLimitSlider" min="0" max="100" value="50" step="1" aria-label="Challenge time limit">
-        <div class="time-limit-readout"><span>Remaining</span><strong id="timerLabel">1:00</strong></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Code groups</h2>
-      <div class="digit-groups" id="digitGroups"></div>
-      <div class="group-buttons">
-        <button id="selectAll">All</button>
-        <button id="selectNone">None</button>
-      </div>
-    </div>
-
-    <div class="panel training-only" id="difficultyPanel">
-      <h2>Difficulty</h2>
-      <div class="difficulty-buttons" role="group" aria-label="Training difficulty">
-        <button class="difficulty-btn selected" data-difficulty="easy" type="button">Easy</button>
-        <button class="difficulty-btn" data-difficulty="medium" type="button">Medium</button>
-        <button class="difficulty-btn" data-difficulty="hard" type="button">Hard</button>
-        <button class="difficulty-btn" data-difficulty="custom" type="button">Custom</button>
-      </div>
-      <div class="reveal-toggle" id="borderToggleRow">
-        <span>Area code borders</span>
-        <label class="switch"><input type="checkbox" id="borderToggle" checked><span class="slider"></span></label>
-      </div>
-      <div class="reveal-toggle" id="colorToggleRow">
-        <span>Unique colors</span>
-        <label class="switch"><input type="checkbox" id="colorToggle" checked><span class="slider"></span></label>
-      </div>
-      <div class="reveal-toggle" id="revealToggleRow">
-        <span>Reveal found codes</span>
-        <label class="switch"><input type="checkbox" id="revealToggle" checked><span class="slider"></span></label>
-      </div>
-      <div class="streak-note">Solved codes drop out of the question pool — each one is asked once per game.</div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -699,6 +731,8 @@ function styleForFeature(feature){
   const ddd = Number(feature.getProperty('ddd'));
   const group = digitGroupOf(ddd);
   const enabled = enabledDigits.has(group);
+  const flashStyle = dddFlashState.get(ddd);
+  if(flashStyle) return flashStyle;
   const challengeVisualsLocked = currentMode === 'challenge';
   if(challengeVisualsLocked){
     return {
@@ -712,8 +746,6 @@ function styleForFeature(feature){
       zIndex: 1
     };
   }
-  const flashStyle = dddFlashState.get(ddd);
-  if(flashStyle) return flashStyle;
   const bordersOn = !challengeVisualsLocked && borderToggle.checked;
   const colorsOn = !challengeVisualsLocked && colorToggle.checked;
   if(!bordersOn){
@@ -752,7 +784,10 @@ function applyRegionStyles(){
 function refreshLabelVisibility(){
   Object.entries(regionEls).forEach(([ddd, el]) => {
     if(!el.label) return;
-    el.label.classList.toggle('show', currentMode !== 'challenge' && revealToggle.checked && solved.has(Number(ddd)));
+    const revealed = currentMode !== 'challenge' && revealToggle.checked && solved.has(Number(ddd));
+    const peeking = tempLabelReveals.has(Number(ddd));
+    el.label.classList.toggle('show', revealed || peeking);
+    el.label.classList.toggle('peek-wrong', peeking);
   });
 }
 
@@ -795,7 +830,9 @@ function getDddLabelOverlayClass(){
         const point = projection.fromLatLngToDivPixel(item.anchor);
         item.el.style.left = `${point.x}px`;
         item.el.style.top = `${point.y}px`;
-        item.el.classList.toggle('show', currentMode !== 'challenge' && revealToggle.checked && solved.has(item.ddd));
+        const peeking = tempLabelReveals.has(item.ddd);
+        item.el.classList.toggle('show', (currentMode !== 'challenge' && revealToggle.checked && solved.has(item.ddd)) || peeking);
+        item.el.classList.toggle('peek-wrong', peeking);
       }
     }
 
@@ -898,18 +935,20 @@ const digitGroupsEl = document.getElementById('digitGroups');
 const revealToggle = document.getElementById('revealToggle');
 const colorToggle = document.getElementById('colorToggle');
 const borderToggle = document.getElementById('borderToggle');
-const borderToggleRow = document.getElementById('borderToggleRow');
-const colorToggleRow = document.getElementById('colorToggleRow');
-const revealToggleRow = document.getElementById('revealToggleRow');
 const difficultyButtons = document.querySelectorAll('.difficulty-btn');
 const difficultyPanel = document.getElementById('difficultyPanel');
 const challengePanel = document.getElementById('challengePanel');
 const timeLimitSlider = document.getElementById('timeLimitSlider');
 const timeLimitLabel = document.getElementById('timeLimitLabel');
 const timerLabel = document.getElementById('timerLabel');
+const roundsSlider = document.getElementById('roundsSlider');
+const roundsLabel = document.getElementById('roundsLabel');
 const homeView = document.getElementById('homeView');
 const modeView = document.getElementById('modeView');
+const configView = document.getElementById('configView');
 const statesView = document.getElementById('statesView');
+const configModeTag = document.getElementById('configModeTag');
+const configModeNote = document.getElementById('configModeNote');
 const homeTitle = document.getElementById('homeTitle');
 const homePrev = document.getElementById('homePrev');
 const homeNext = document.getElementById('homeNext');
@@ -928,6 +967,9 @@ let challengeTimerId = null;
 let challengeEndsAt = null;
 let challengeExpired = false;
 let savedTrainingSettings = null;
+let roundsPlayed = 0;
+let roundLimit = Infinity;
+let tempLabelReveals = new Map();
 
 const DIFFICULTY_SETTINGS = {
   easy: { borders: true, colors: true, reveal: true },
@@ -948,8 +990,10 @@ function showView(view){
   currentView = view;
   homeView.classList.toggle('hidden', view !== 'home');
   modeView.classList.toggle('hidden', view !== 'modes');
+  configView.classList.toggle('hidden', view !== 'config');
   statesView.classList.toggle('hidden', view !== 'states');
   gameUiEls.forEach(el => el.classList.toggle('hidden', view !== 'game'));
+  if(view === 'config') refreshConfigModeCopy();
   if(view === 'states') buildStatesPlaceholder();
   if(view === 'game'){
     if(dddBounds && window.map) window.map.fitBounds(dddBounds, 32);
@@ -959,21 +1003,21 @@ function showView(view){
   }
 }
 
-function setVisualControlsLocked(locked){
-  [borderToggle, colorToggle, revealToggle].forEach(toggle => { toggle.disabled = locked; });
-  [borderToggleRow, colorToggleRow, revealToggleRow].forEach(row => {
-    if(row) row.classList.toggle('disabled', locked);
-  });
-}
-
 function applyModeUi(){
   const challenge = currentMode === 'challenge';
-  difficultyPanel.classList.toggle('hidden', challenge);
-  challengePanel.classList.toggle('hidden', !challenge);
-  setVisualControlsLocked(challenge);
   scoreCorrectLabelEl.textContent = challenge ? 'Points' : 'Correct';
   scoreTotalLabelEl.textContent = challenge ? 'Guesses' : 'Asked';
   scoreStreakLabelEl.textContent = challenge ? 'Last' : 'Streak';
+}
+
+function refreshConfigModeCopy(){
+  const challenge = currentMode === 'challenge';
+  configModeTag.textContent = challenge ? 'Area Codes · Challenge' : 'Area Codes · Training';
+  configModeNote.textContent = challenge
+    ? 'Challenge locks borders, colors, and reveal settings once the game starts.'
+    : 'Tune the training settings, code groups, and round count before starting.';
+  difficultyPanel.classList.toggle('hidden', challenge);
+  challengePanel.classList.toggle('hidden', !challenge);
 }
 
 function enterTrainingMode(){
@@ -987,8 +1031,7 @@ function enterTrainingMode(){
   stopChallengeTimer();
   applyModeUi();
   refreshDifficultySelection();
-  restartGame();
-  showView('game');
+  showView('config');
 }
 
 function enterChallengeMode(){
@@ -1004,6 +1047,10 @@ function enterChallengeMode(){
   colorToggle.checked = false;
   revealToggle.checked = false;
   applyModeUi();
+  showView('config');
+}
+
+function startSelectedModeGame(){
   restartGame();
   showView('game');
 }
@@ -1123,6 +1170,16 @@ function sliderValueToSeconds(value){
   return Math.round(60 * Math.exp(Math.log(120) * ((v - 50) / 49)));
 }
 
+function sliderValueToRounds(value){
+  const v = Number(value);
+  if(v >= 100) return Infinity;
+  return Math.max(1, Math.round(Math.exp(Math.log(2500) * (v / 100))));
+}
+
+function formatRounds(count){
+  return Number.isFinite(count) ? String(count) : 'Infinite';
+}
+
 function formatDuration(seconds){
   if(!Number.isFinite(seconds)) return 'Untimed';
   const whole = Math.max(0, Math.ceil(seconds));
@@ -1140,10 +1197,18 @@ function selectedTimeLimitSeconds(){
   return sliderValueToSeconds(timeLimitSlider.value);
 }
 
+function selectedRoundLimit(){
+  return sliderValueToRounds(roundsSlider.value);
+}
+
 function refreshTimeLimitLabel(){
   const seconds = selectedTimeLimitSeconds();
   timeLimitLabel.textContent = formatDuration(seconds);
   if(!challengeEndsAt) timerLabel.textContent = formatDuration(seconds);
+}
+
+function refreshRoundsLabel(){
+  roundsLabel.textContent = formatRounds(selectedRoundLimit());
 }
 
 function stopChallengeTimer(){
@@ -1443,6 +1508,12 @@ function activeDDDs(){
 function nextQuestion(){
   feedback.textContent = '';
   feedback.className = 'feedback';
+  if(Number.isFinite(roundLimit) && roundsPlayed >= roundLimit){
+    if(currentMode === 'challenge') stopChallengeTimer();
+    promptText.textContent = 'Round limit reached. Start a new game to play again.';
+    currentTarget = null;
+    return;
+  }
   if(currentMode === 'challenge' && challengeExpired){
     promptText.textContent = 'Time is up. Restart to play again.';
     currentTarget = null;
@@ -1458,12 +1529,12 @@ function nextQuestion(){
     currentTarget = null;
     return;
   }
+  roundsPlayed++;
   currentTarget = pool[Math.floor(Math.random()*pool.length)];
   promptText.innerHTML = `Click DDD <span class="ddd-num">${currentTarget}</span> on the map`;
 }
 
 function flash(ddd, cls, duration){
-  if(currentMode === 'challenge') return;
   const featureInfo = regionEls[ddd];
   if(!featureInfo || !featureInfo.feature) return;
   const flashStyle = cls === 'correct-flash' ? {
@@ -1487,6 +1558,15 @@ function markSolved(ddd){
   progressTag.textContent = `${solved.size} / ${DATA.regions.length} solved`;
 }
 
+function peekLabel(ddd, duration){
+  tempLabelReveals.set(ddd, true);
+  refreshLabelVisibility();
+  setTimeout(() => {
+    tempLabelReveals.delete(ddd);
+    refreshLabelVisibility();
+  }, duration);
+}
+
 function onRegionClick(clickedDdd, clickLatLng){
   if(currentView !== 'game') return;
   if(currentTarget === null) return;
@@ -1498,13 +1578,13 @@ function onRegionClick(clickedDdd, clickLatLng){
     score.points += roundPoints;
     score.lastPoints = roundPoints;
     if(clickedDdd === currentTarget) score.correct++;
-    const targetUf = regionEls[currentTarget].uf;
     const wasCorrect = clickedDdd === currentTarget;
     feedback.textContent = wasCorrect
-      ? `Correct — DDD ${currentTarget} (${STATE_NAMES[uf]||uf}) for 5000 points`
-      : `${roundPoints} points — guessed DDD ${clickedDdd}. Target was ${currentTarget} (${STATE_NAMES[targetUf]||targetUf})`;
+      ? `Correct — DDD ${currentTarget} for 5000 points`
+      : `Wrong — DDD ${clickedDdd} scored ${roundPoints} points`;
     feedback.className = wasCorrect ? 'feedback correct' : 'feedback wrong';
     flash(clickedDdd, wasCorrect ? 'correct-flash' : 'wrong-flash', 650);
+    if(!wasCorrect) peekLabel(clickedDdd, 750);
     markSolved(currentTarget);
     updateScore();
     setTimeout(nextQuestion, wasCorrect ? 750 : 1250);
@@ -1542,7 +1622,10 @@ function restartGame(){
   score = {correct:0, total:0, streak:0, points:0, lastPoints:0};
   solved = new Set();
   dddFlashState = new Map();
+  tempLabelReveals = new Map();
   challengeExpired = false;
+  roundLimit = selectedRoundLimit();
+  roundsPlayed = 0;
   refreshLabelVisibility();
   applyRegionStyles();
   progressTag.textContent = `0 / ${DATA.regions.length} solved`;
@@ -1558,8 +1641,10 @@ homeTitle.addEventListener('click', () => {
 });
 document.getElementById('modeBackBtn').addEventListener('click', () => showView('home'));
 document.getElementById('statesBackBtn').addEventListener('click', () => showView('home'));
+document.getElementById('configBackBtn').addEventListener('click', () => showView('modes'));
 document.getElementById('trainingModeBtn').addEventListener('click', enterTrainingMode);
 document.getElementById('challengeModeBtn').addEventListener('click', enterChallengeMode);
+document.getElementById('newGameBtn').addEventListener('click', startSelectedModeGame);
 
 revealToggle.addEventListener('change', ()=>{
   refreshLabelVisibility();
@@ -1578,21 +1663,14 @@ difficultyButtons.forEach(button => {
 });
 refreshDifficultySelection();
 refreshTimeLimitLabel();
+refreshRoundsLabel();
 timeLimitSlider.addEventListener('input', ()=>{
   refreshTimeLimitLabel();
   if(currentMode === 'challenge' && currentView === 'game') startChallengeTimer();
 });
-
-const sidebarEl = document.getElementById('sidebar');
-const sidebarToggle = document.getElementById('sidebarToggle');
-let sidebarOpen = true;
-sidebarToggle.addEventListener('click', ()=>{
-  sidebarOpen = !sidebarOpen;
-  sidebarEl.classList.toggle('collapsed', !sidebarOpen);
-  sidebarToggle.textContent = sidebarOpen ? '✕' : '☰';
+roundsSlider.addEventListener('input', ()=>{
+  refreshRoundsLabel();
 });
-
-document.getElementById('newGameBtn').addEventListener('click', restartGame);
 document.getElementById('selectAll').addEventListener('click', ()=>{
   document.querySelectorAll('.digit-row input[type=checkbox]').forEach(cb=>{
     cb.checked = true;
