@@ -118,12 +118,22 @@
       linear-gradient(135deg, rgba(8,26,36,0.96), rgba(18,58,77,0.94));
   }
   #homeView{ align-items:flex-start; }
+  #configView,
+  #endView{
+    align-items:flex-start;
+    overflow:auto;
+    padding-top: 80px;
+    padding-bottom: 40px;
+  }
+  .hidden{ display:none !important; }
   .view.hidden,
   .game-ui.hidden{ display:none; }
   .home-card,
   .mode-card,
   .config-card,
-  .states-card{
+  .states-card,
+  .pause-card,
+  .end-card{
     width:min(880px, 100%);
     border:1px solid rgba(212,162,76,0.32);
     border-radius:14px;
@@ -182,10 +192,39 @@
   @keyframes titleInRight{ from{ transform:translateX(55%); opacity:0; } to{ transform:translateX(0); opacity:1; } }
   .home-note{ color:var(--fog); font-size:15px; margin:0; text-align:center; }
   .mode-card{ padding: clamp(24px, 4vw, 42px); }
-  .config-card{ padding: clamp(24px, 4vw, 42px); }
+  .config-card,
+  .pause-card,
+  .end-card{ padding: clamp(24px, 4vw, 42px); }
+  .opaque-view{
+    background:
+      radial-gradient(circle at 28% 24%, rgb(38 54 44) 0%, transparent 34%),
+      linear-gradient(135deg, #081a24, #123a4d);
+  }
+  .config-card,
+  .pause-card,
+  .end-card{
+    background: #123a4d;
+    backdrop-filter: none;
+  }
+  .view-nav-btn{
+    position:absolute;
+    top:18px;
+    left:18px;
+    z-index:31;
+    width:46px;
+    height:46px;
+    padding:0;
+    border-radius:999px;
+    font-size:24px;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: rgba(8,26,36,0.92);
+  }
   .config-topline{
     display:flex;
-    align-items:baseline;
+    align-items:flex-start;
     justify-content:space-between;
     gap: 16px;
     flex-wrap:wrap;
@@ -201,7 +240,7 @@
   }
   .config-grid{
     display:grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.78fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
   .config-stack{
@@ -213,7 +252,9 @@
   .start-row button{ min-width: 160px; min-height: 46px; font-size: 14px; }
   .config-note{ color:var(--fog); font-size:14px; line-height:1.5; margin:0; }
   .mode-card h2,
-  .states-card h2{
+  .states-card h2,
+  .pause-card h2,
+  .end-card h2{
     font-family:'Fraunces', serif;
     font-size: clamp(32px, 6vw, 58px);
     margin:0 0 22px;
@@ -372,6 +413,75 @@
 
   .group-buttons{ display:flex; gap: 6px; margin-top: 8px; }
 
+  .pause-card{ width:min(460px, 100%); }
+  .end-card{
+    display:flex;
+    flex-direction:column;
+    gap: 18px;
+  }
+  .results-grid{
+    width:min(520px, 100%);
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .results-grid .score-cell{ padding: 10px 8px; }
+  .results-grid .score-cell .num{ font-size: 20px; }
+  .results-section{ display:flex; flex-direction:column; gap: 12px; }
+  .results-section h3{
+    margin:0;
+    font-family:'Fraunces', serif;
+    font-size: 20px;
+    color: var(--gold-bright);
+  }
+  .results-list{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+  }
+  .results-item{
+    padding: 12px 14px;
+    border: 1px solid rgba(242,236,217,0.12);
+    border-radius: 8px;
+    background: rgba(8,26,36,0.28);
+  }
+  .results-item strong{
+    display:block;
+    margin-bottom: 6px;
+    color: var(--paper);
+  }
+  .results-item p{
+    margin: 0;
+    color: var(--fog);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .results-empty{
+    margin:0;
+    color: var(--fog);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .results-chip-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 8px;
+  }
+  .results-chip{
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(212,162,76,0.32);
+    background: rgba(242,236,217,0.05);
+    color: var(--paper);
+    font-size: 12px;
+  }
+  .end-actions{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+  }
+
   button{
     font-family:'IBM Plex Sans', sans-serif;
     font-weight: 600;
@@ -439,6 +549,8 @@
     .mode-btn{ min-height:118px; }
     .game-carousel{ grid-template-columns:44px minmax(0,1fr) 44px; }
     .carousel-arrow{ width:40px; height:40px; }
+    .end-actions,
+    .results-grid{ grid-template-columns:1fr; }
   }
 
   ::selection{ background: var(--gold); color: var(--ink-deep); }
@@ -476,21 +588,19 @@
     </div>
   </section>
 
-  <section class="view hidden" id="configView" aria-label="Area Codes configuration">
+  <section class="view hidden opaque-view" id="configView" aria-label="Area Codes configuration">
+    <button class="view-nav-btn" id="configBackBtn" type="button" aria-label="Back to modes">&#8592;</button>
     <div class="config-card">
       <div class="config-topline">
         <div>
           <div class="config-mode-tag" id="configModeTag">Area Codes</div>
           <h2>Configure your game</h2>
         </div>
-        <div>
-          <p class="config-note" id="configModeNote">Choose settings, then start the game.</p>
-          <button class="back-btn" id="configBackBtn" type="button">Back to modes</button>
-        </div>
+        <p class="config-note" id="configModeNote">Choose settings, then start the game.</p>
       </div>
 
       <div class="config-grid">
-        <div class="config-stack">
+        <div class="config-stack" id="challengeConfigStack">
           <div class="panel challenge-only hidden" id="challengePanel">
             <h2>Challenge Timer</h2>
             <div class="time-limit-control">
@@ -499,7 +609,7 @@
             </div>
           </div>
 
-          <div class="panel">
+          <div class="panel challenge-only hidden" id="roundsPanel">
             <h2>Rounds</h2>
             <div class="rounds-control">
               <div class="time-limit-readout"><span>Codes to guess</span><strong id="roundsLabel">50</strong></div>
@@ -509,8 +619,8 @@
           </div>
         </div>
 
-        <div class="config-stack">
-          <div class="panel">
+        <div class="config-stack" id="trainingConfigStack">
+          <div class="panel training-only" id="codeGroupsPanel">
             <h2>Code groups</h2>
             <div class="digit-groups" id="digitGroups"></div>
             <div class="group-buttons">
@@ -564,6 +674,38 @@
     </div>
   </section>
 
+  <section class="view hidden opaque-view" id="pauseView" aria-label="Paused game">
+    <div class="pause-card">
+      <div class="config-mode-tag" id="pauseModeTag">Area Codes</div>
+      <h2>Game paused</h2>
+      <p class="config-note">Resume where you left off, or exit back to this mode's configuration screen.</p>
+      <div class="end-actions">
+        <button class="primary" id="resumeGameBtn" type="button">Resume</button>
+        <button id="exitGameBtn" type="button">Exit</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view hidden opaque-view" id="endView" aria-label="Game results">
+    <div class="end-card">
+      <div class="config-mode-tag" id="endModeTag">Area Codes</div>
+      <h2 id="endTitle">Game complete</h2>
+      <p class="config-note" id="endSummary">Your results will appear here.</p>
+      <div class="results-grid" id="endStats"></div>
+      <div class="results-section" id="endPrimarySection">
+        <h3 id="endPrimaryTitle">Results</h3>
+        <div id="endPrimaryContent"></div>
+      </div>
+      <div class="results-section" id="endSecondarySection">
+        <h3 id="endSecondaryTitle">Details</h3>
+        <div id="endSecondaryContent"></div>
+      </div>
+      <div class="start-row">
+        <button class="primary" id="endBackToConfigBtn" type="button">Back to config</button>
+      </div>
+    </div>
+  </section>
+
   <header class="game-ui hidden">
     <h1><span class="small">Correios &amp; Telefonia · Atlas do Brasil</span>DDD Area Code Atlas</h1>
     <div class="legend-tag">67 regions · <span id="progressTag">0 / 0 solved</span></div>
@@ -606,6 +748,7 @@ function initMap(){
   });
 
   applyStateBorderStyle();
+  window.map.data.setStyle(styleForFeature);
   if(!digitGroupsEl.children.length) buildDigitGroups();
   void loadCountryGeoJson()
     .then(() => loadDddGeoJson())
@@ -775,10 +918,7 @@ function styleForFeature(feature){
 
 function applyRegionStyles(){
   if(!window.map || !window.map.data) return;
-  window.map.data.revertStyle();
-  window.map.data.forEach(feature => {
-    window.map.data.overrideStyle(feature, styleForFeature(feature));
-  });
+  window.map.data.setStyle(styleForFeature);
 }
 
 function refreshLabelVisibility(){
@@ -889,7 +1029,7 @@ async function loadDddGeoJson(){
       onRegionClick(Number(event.feature.getProperty('ddd')), event.latLng);
     });
   }
-  progressTag.textContent = `0 / ${DATA.regions.length} solved`;
+  refreshProgressTag();
   nextQuestion();
   window.map.fitBounds(dddBounds, 32);
 }
@@ -938,17 +1078,34 @@ const borderToggle = document.getElementById('borderToggle');
 const difficultyButtons = document.querySelectorAll('.difficulty-btn');
 const difficultyPanel = document.getElementById('difficultyPanel');
 const challengePanel = document.getElementById('challengePanel');
+const roundsPanel = document.getElementById('roundsPanel');
 const timeLimitSlider = document.getElementById('timeLimitSlider');
 const timeLimitLabel = document.getElementById('timeLimitLabel');
 const timerLabel = document.getElementById('timerLabel');
 const roundsSlider = document.getElementById('roundsSlider');
 const roundsLabel = document.getElementById('roundsLabel');
+const codeGroupsPanel = document.getElementById('codeGroupsPanel');
+const challengeConfigStack = document.getElementById('challengeConfigStack');
+const trainingConfigStack = document.getElementById('trainingConfigStack');
 const homeView = document.getElementById('homeView');
 const modeView = document.getElementById('modeView');
 const configView = document.getElementById('configView');
 const statesView = document.getElementById('statesView');
+const pauseView = document.getElementById('pauseView');
+const endView = document.getElementById('endView');
 const configModeTag = document.getElementById('configModeTag');
 const configModeNote = document.getElementById('configModeNote');
+const pauseModeTag = document.getElementById('pauseModeTag');
+const endModeTag = document.getElementById('endModeTag');
+const endTitle = document.getElementById('endTitle');
+const endSummary = document.getElementById('endSummary');
+const endStats = document.getElementById('endStats');
+const endPrimarySection = document.getElementById('endPrimarySection');
+const endPrimaryTitle = document.getElementById('endPrimaryTitle');
+const endPrimaryContent = document.getElementById('endPrimaryContent');
+const endSecondarySection = document.getElementById('endSecondarySection');
+const endSecondaryTitle = document.getElementById('endSecondaryTitle');
+const endSecondaryContent = document.getElementById('endSecondaryContent');
 const homeTitle = document.getElementById('homeTitle');
 const homePrev = document.getElementById('homePrev');
 const homeNext = document.getElementById('homeNext');
@@ -970,6 +1127,11 @@ let savedTrainingSettings = null;
 let roundsPlayed = 0;
 let roundLimit = Infinity;
 let tempLabelReveals = new Map();
+let pausedChallengeRemainingMs = null;
+let gameEnded = false;
+let challengeRoundResults = [];
+let trainingMisses = [];
+let trainingStatesSeen = new Set();
 
 const DIFFICULTY_SETTINGS = {
   easy: { borders: true, colors: true, reveal: true },
@@ -992,13 +1154,18 @@ function showView(view){
   modeView.classList.toggle('hidden', view !== 'modes');
   configView.classList.toggle('hidden', view !== 'config');
   statesView.classList.toggle('hidden', view !== 'states');
+  pauseView.classList.toggle('hidden', view !== 'pause');
+  endView.classList.toggle('hidden', view !== 'end');
   gameUiEls.forEach(el => el.classList.toggle('hidden', view !== 'game'));
   if(view === 'config') refreshConfigModeCopy();
   if(view === 'states') buildStatesPlaceholder();
   if(view === 'game'){
     if(dddBounds && window.map) window.map.fitBounds(dddBounds, 32);
-    if(currentTarget === null) nextQuestion();
+    if(currentTarget === null && !gameEnded) nextQuestion();
+  } else if(view === 'pause'){
+    stopChallengeTimer();
   } else {
+    pausedChallengeRemainingMs = null;
     stopChallengeTimer();
   }
 }
@@ -1012,12 +1179,46 @@ function applyModeUi(){
 
 function refreshConfigModeCopy(){
   const challenge = currentMode === 'challenge';
-  configModeTag.textContent = challenge ? 'Area Codes · Challenge' : 'Area Codes · Training';
+  const modeLabel = challenge ? 'Area Codes · Challenge' : 'Area Codes · Training';
+  configModeTag.textContent = modeLabel;
+  pauseModeTag.textContent = modeLabel;
+  endModeTag.textContent = modeLabel;
   configModeNote.textContent = challenge
-    ? 'Challenge locks borders, colors, and reveal settings once the game starts.'
-    : 'Tune the training settings, code groups, and round count before starting.';
+    ? 'Challenge uses all zones and lets you tune the timer and round count before starting.'
+    : 'Tune the training settings and code groups before starting.';
   difficultyPanel.classList.toggle('hidden', challenge);
   challengePanel.classList.toggle('hidden', !challenge);
+  roundsPanel.classList.toggle('hidden', !challenge);
+  codeGroupsPanel.classList.toggle('hidden', challenge);
+  challengeConfigStack.classList.toggle('hidden', !challenge);
+  trainingConfigStack.classList.toggle('hidden', challenge);
+}
+
+function allDigitGroups(){
+  return [...new Set(DATA.regions.map(region => digitGroupOf(region.ddd)))].sort((a, b) => a - b);
+}
+
+function syncDigitGroupCheckboxes(){
+  document.querySelectorAll('.digit-row input[type=checkbox]').forEach(cb => {
+    const group = Number(cb.id.replace('grp', ''));
+    cb.checked = enabledDigits.has(group);
+  });
+}
+
+function setEnabledDigitGroups(groups){
+  enabledDigits = new Set(groups);
+  syncDigitGroupCheckboxes();
+  refreshDisabledStyling();
+  refreshProgressTag();
+}
+
+function saveTrainingConfiguration(){
+  savedTrainingSettings = {
+    borders: borderToggle.checked,
+    colors: colorToggle.checked,
+    reveal: revealToggle.checked,
+    enabledDigits: [...enabledDigits]
+  };
 }
 
 function enterTrainingMode(){
@@ -1026,8 +1227,12 @@ function enterTrainingMode(){
     borderToggle.checked = savedTrainingSettings.borders;
     colorToggle.checked = savedTrainingSettings.colors;
     revealToggle.checked = savedTrainingSettings.reveal;
+    setEnabledDigitGroups(savedTrainingSettings.enabledDigits);
+  } else {
+    setEnabledDigitGroups(allDigitGroups());
   }
   challengeExpired = false;
+  pausedChallengeRemainingMs = null;
   stopChallengeTimer();
   applyModeUi();
   refreshDifficultySelection();
@@ -1036,16 +1241,14 @@ function enterTrainingMode(){
 
 function enterChallengeMode(){
   if(currentMode !== 'challenge'){
-    savedTrainingSettings = {
-      borders: borderToggle.checked,
-      colors: colorToggle.checked,
-      reveal: revealToggle.checked
-    };
+    saveTrainingConfiguration();
   }
   currentMode = 'challenge';
   borderToggle.checked = false;
   colorToggle.checked = false;
   revealToggle.checked = false;
+  setEnabledDigitGroups(allDigitGroups());
+  pausedChallengeRemainingMs = null;
   applyModeUi();
   showView('config');
 }
@@ -1201,6 +1404,11 @@ function selectedRoundLimit(){
   return sliderValueToRounds(roundsSlider.value);
 }
 
+function refreshProgressTag(){
+  const total = DATA.regions.filter(region => enabledDigits.has(digitGroupOf(region.ddd))).length;
+  progressTag.textContent = `${solved.size} / ${total} solved`;
+}
+
 function refreshTimeLimitLabel(){
   const seconds = selectedTimeLimitSeconds();
   timeLimitLabel.textContent = formatDuration(seconds);
@@ -1221,12 +1429,8 @@ function stopChallengeTimer(){
 
 function expireChallenge(){
   challengeExpired = true;
-  currentTarget = null;
-  stopChallengeTimer();
   timerLabel.textContent = '0:00';
-  promptText.textContent = 'Time is up. Restart to play again.';
-  feedback.textContent = `Final score: ${score.points} points from ${score.total} guesses.`;
-  feedback.className = 'feedback wrong';
+  finishGame('time');
 }
 
 function updateChallengeTimer(){
@@ -1243,6 +1447,24 @@ function startChallengeTimer(){
   timerLabel.textContent = formatDuration(seconds);
   if(!Number.isFinite(seconds)) return;
   challengeEndsAt = Date.now() + seconds * 1000;
+  updateChallengeTimer();
+  challengeTimerId = setInterval(updateChallengeTimer, 250);
+}
+
+function pauseChallengeTimer(){
+  if(currentMode !== 'challenge') return;
+  pausedChallengeRemainingMs = challengeEndsAt ? Math.max(0, challengeEndsAt - Date.now()) : null;
+  stopChallengeTimer();
+}
+
+function resumeChallengeTimer(){
+  if(currentMode !== 'challenge' || gameEnded || challengeExpired) return;
+  if(pausedChallengeRemainingMs === null){
+    if(score.total === 0) startChallengeTimer();
+    return;
+  }
+  challengeEndsAt = Date.now() + pausedChallengeRemainingMs;
+  pausedChallengeRemainingMs = null;
   updateChallengeTimer();
   challengeTimerId = setInterval(updateChallengeTimer, 250);
 }
@@ -1311,15 +1533,25 @@ function geometryDistanceKm(point, geometry){
   return min;
 }
 
-function challengeScoreForGuess(clickedDdd, clickLatLng){
-  if(clickedDdd === currentTarget) return 5000;
+function challengeResultForGuess(clickedDdd, clickLatLng){
   const clickedInfo = regionEls[clickedDdd] || {};
   const targetInfo = regionEls[currentTarget] || {};
+  const correct = clickedDdd === currentTarget;
   const guessPoint = clickLatLng || clickedInfo.anchor;
-  const boundaryDistanceKm = geometryDistanceKm(guessPoint, targetInfo.geometry);
-  const distanceKm = Number.isFinite(boundaryDistanceKm) ? boundaryDistanceKm : haversineKm(guessPoint, targetInfo.anchor);
-  if(distanceKm >= 2500) return 0;
-  return Math.round(5000 * Math.exp(-distanceKm / 360));
+  const boundaryDistanceKm = correct ? 0 : geometryDistanceKm(guessPoint, targetInfo.geometry);
+  const distanceKm = correct
+    ? 0
+    : (Number.isFinite(boundaryDistanceKm) ? boundaryDistanceKm : haversineKm(guessPoint, targetInfo.anchor));
+  const points = correct ? 5000 : (distanceKm >= 2500 ? 0 : Math.round(5000 * Math.exp(-distanceKm / 360)));
+  return {
+    correct,
+    points,
+    distanceKm,
+    target: currentTarget,
+    clicked: clickedDdd,
+    targetUf: targetInfo.uf,
+    clickedUf: clickedInfo.uf
+  };
 }
 
 function svgClickLatLng(event, svgRoot){
@@ -1379,7 +1611,7 @@ function getDddOverlayClass(){
       buildDigitGroups();
       refreshDisabledStyling();
       refreshLabelVisibility();
-      progressTag.textContent = `0 / ${DATA.regions.length} solved`;
+      refreshProgressTag();
       nextQuestion();
     }
 
@@ -1497,6 +1729,7 @@ function buildDigitGroups(){
 
 function refreshDisabledStyling(){
   applyRegionStyles();
+  refreshProgressTag();
 }
 
 function activeDDDs(){
@@ -1506,31 +1739,31 @@ function activeDDDs(){
 }
 
 function nextQuestion(){
+  if(gameEnded) return;
   feedback.textContent = '';
   feedback.className = 'feedback';
   if(Number.isFinite(roundLimit) && roundsPlayed >= roundLimit){
-    if(currentMode === 'challenge') stopChallengeTimer();
-    promptText.textContent = 'Round limit reached. Start a new game to play again.';
-    currentTarget = null;
+    finishGame('round-limit');
     return;
   }
   if(currentMode === 'challenge' && challengeExpired){
-    promptText.textContent = 'Time is up. Restart to play again.';
-    currentTarget = null;
+    finishGame('time');
     return;
   }
   const pool = activeDDDs();
   if(pool.length === 0){
     const anyEnabled = enabledDigits.size > 0;
-    if(currentMode === 'challenge' && anyEnabled) stopChallengeTimer();
-    promptText.textContent = anyEnabled
-      ? (currentMode === 'challenge' ? 'Challenge complete. Restart to play again.' : 'All active codes solved! Enable more groups or restart.')
-      : 'Enable at least one code group to play.';
-    currentTarget = null;
+    if(anyEnabled){
+      finishGame('complete');
+    } else {
+      promptText.textContent = 'Enable at least one code group to play.';
+      currentTarget = null;
+    }
     return;
   }
   roundsPlayed++;
   currentTarget = pool[Math.floor(Math.random()*pool.length)];
+  if(currentMode === 'training' && regionEls[currentTarget]) trainingStatesSeen.add(regionEls[currentTarget].uf);
   promptText.innerHTML = `Click DDD <span class="ddd-num">${currentTarget}</span> on the map`;
 }
 
@@ -1555,7 +1788,148 @@ function markSolved(ddd){
   solved.add(ddd);
   refreshLabelVisibility();
   applyRegionStyles();
-  progressTag.textContent = `${solved.size} / ${DATA.regions.length} solved`;
+  refreshProgressTag();
+}
+
+function formatDddLabel(ddd, uf){
+  const stateName = STATE_NAMES[uf] || uf;
+  return stateName ? `DDD ${ddd} (${stateName})` : `DDD ${ddd}`;
+}
+
+function formatDistanceKm(distanceKm){
+  if(!Number.isFinite(distanceKm)) return 'Unknown';
+  if(distanceKm < 1) return '< 1 km';
+  return `${Math.round(distanceKm).toLocaleString()} km`;
+}
+
+function renderStatCells(cells){
+  endStats.textContent = '';
+  cells.forEach(cell => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'score-cell';
+    const num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = cell.value;
+    const label = document.createElement('span');
+    label.className = 'lbl';
+    label.textContent = cell.label;
+    wrapper.appendChild(num);
+    wrapper.appendChild(label);
+    endStats.appendChild(wrapper);
+  });
+}
+
+function renderResultsList(container, rows, emptyText){
+  container.textContent = '';
+  if(!rows.length){
+    const empty = document.createElement('p');
+    empty.className = 'results-empty';
+    empty.textContent = emptyText;
+    container.appendChild(empty);
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'results-list';
+  rows.forEach(row => {
+    const item = document.createElement('div');
+    item.className = 'results-item';
+    const title = document.createElement('strong');
+    title.textContent = row.title;
+    const body = document.createElement('p');
+    body.textContent = row.body;
+    item.appendChild(title);
+    item.appendChild(body);
+    list.appendChild(item);
+  });
+  container.appendChild(list);
+}
+
+function renderStateChips(container, states){
+  container.textContent = '';
+  if(!states.length){
+    const empty = document.createElement('p');
+    empty.className = 'results-empty';
+    empty.textContent = 'No states recorded.';
+    container.appendChild(empty);
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'results-chip-list';
+  states.forEach(state => {
+    const chip = document.createElement('span');
+    chip.className = 'results-chip';
+    chip.textContent = state;
+    list.appendChild(chip);
+  });
+  container.appendChild(list);
+}
+
+function renderEndScreen(reason){
+  if(currentMode === 'challenge'){
+    endTitle.textContent = reason === 'time' ? 'Time is up' : 'Challenge complete';
+    endSummary.textContent = `You scored ${score.points.toLocaleString()} points across ${challengeRoundResults.length} rounds.`;
+    renderStatCells([
+      { label: 'Points', value: score.points.toLocaleString() },
+      { label: 'Rounds', value: String(challengeRoundResults.length) },
+      { label: 'Correct', value: String(score.correct) }
+    ]);
+    endPrimaryTitle.textContent = 'Round results';
+    renderResultsList(endPrimaryContent, challengeRoundResults.map((round, index) => ({
+      title: `Round ${index + 1} · Target ${formatDddLabel(round.target, round.targetUf)}`,
+      body: `Clicked ${formatDddLabel(round.clicked, round.clickedUf)}. Distance: ${formatDistanceKm(round.distanceKm)}. Score: ${round.points.toLocaleString()} points.`
+    })), 'No rounds recorded.');
+    endSecondarySection.style.display = 'none';
+    return;
+  }
+
+  const trainingStates = [...trainingStatesSeen]
+    .map(uf => STATE_NAMES[uf] || uf)
+    .sort((a, b) => a.localeCompare(b));
+  endTitle.textContent = 'Training complete';
+  endSummary.textContent = `You found ${solved.size} zones and missed ${trainingMisses.length} rounds.`;
+  renderStatCells([
+    { label: 'Found', value: String(solved.size) },
+    { label: 'Misses', value: String(trainingMisses.length) },
+    { label: 'States', value: String(trainingStates.length) }
+  ]);
+  endPrimaryTitle.textContent = 'States covered';
+  renderStateChips(endPrimaryContent, trainingStates);
+  endSecondarySection.style.display = '';
+  endSecondaryTitle.textContent = 'Missed rounds';
+  renderResultsList(endSecondaryContent, trainingMisses.map((round, index) => ({
+    title: `Miss ${index + 1} · Target ${formatDddLabel(round.target, round.targetUf)}`,
+    body: `Clicked ${formatDddLabel(round.clicked, round.clickedUf)}.`
+  })), 'Perfect run. No missed rounds.');
+}
+
+function finishGame(reason){
+  if(gameEnded) return;
+  gameEnded = true;
+  currentTarget = null;
+  pausedChallengeRemainingMs = null;
+  stopChallengeTimer();
+  renderEndScreen(reason);
+  showView('end');
+}
+
+function pauseCurrentGame(){
+  if(currentView !== 'game' || gameEnded) return;
+  if(currentMode === 'challenge') pauseChallengeTimer();
+  showView('pause');
+}
+
+function resumePausedGame(){
+  if(currentView !== 'pause') return;
+  showView('game');
+  if(currentMode === 'challenge') resumeChallengeTimer();
+}
+
+function exitGameToConfig(){
+  gameEnded = true;
+  currentTarget = null;
+  pausedChallengeRemainingMs = null;
+  stopChallengeTimer();
+  showView('config');
 }
 
 function peekLabel(ddd, duration){
@@ -1569,19 +1943,21 @@ function peekLabel(ddd, duration){
 
 function onRegionClick(clickedDdd, clickLatLng){
   if(currentView !== 'game') return;
+  if(gameEnded) return;
   if(currentTarget === null) return;
   if(currentMode === 'challenge' && challengeExpired) return;
   score.total++;
   const uf = regionEls[clickedDdd].uf;
   if(currentMode === 'challenge'){
-    const roundPoints = challengeScoreForGuess(clickedDdd, clickLatLng);
-    score.points += roundPoints;
-    score.lastPoints = roundPoints;
+    const roundResult = challengeResultForGuess(clickedDdd, clickLatLng);
+    score.points += roundResult.points;
+    score.lastPoints = roundResult.points;
     if(clickedDdd === currentTarget) score.correct++;
     const wasCorrect = clickedDdd === currentTarget;
+    challengeRoundResults.push(roundResult);
     feedback.textContent = wasCorrect
       ? `Correct — DDD ${currentTarget} for 5000 points`
-      : `Wrong — DDD ${clickedDdd} scored ${roundPoints} points`;
+      : `Wrong — DDD ${clickedDdd} scored ${roundResult.points} points`;
     feedback.className = wasCorrect ? 'feedback correct' : 'feedback wrong';
     flash(clickedDdd, wasCorrect ? 'correct-flash' : 'wrong-flash', 650);
     if(!wasCorrect) peekLabel(clickedDdd, 750);
@@ -1602,6 +1978,12 @@ function onRegionClick(clickedDdd, clickLatLng){
   } else {
     score.streak = 0;
     const targetUf = regionEls[currentTarget].uf;
+    trainingMisses.push({
+      target: currentTarget,
+      clicked: clickedDdd,
+      targetUf,
+      clickedUf: uf
+    });
     feedback.textContent = revealToggle.checked
       ? `Not quite — that's DDD ${clickedDdd}. Target was ${currentTarget} (${STATE_NAMES[targetUf]||targetUf})`
       : `Not quite — that's DDD ${clickedDdd}. Try the next prompt.`;
@@ -1624,11 +2006,16 @@ function restartGame(){
   dddFlashState = new Map();
   tempLabelReveals = new Map();
   challengeExpired = false;
-  roundLimit = selectedRoundLimit();
+  pausedChallengeRemainingMs = null;
+  gameEnded = false;
+  challengeRoundResults = [];
+  trainingMisses = [];
+  trainingStatesSeen = new Set();
+  roundLimit = currentMode === 'challenge' ? selectedRoundLimit() : Infinity;
   roundsPlayed = 0;
   refreshLabelVisibility();
   applyRegionStyles();
-  progressTag.textContent = `0 / ${DATA.regions.length} solved`;
+  refreshProgressTag();
   updateScore();
   nextQuestion();
   if(currentMode === 'challenge') startChallengeTimer();
@@ -1645,6 +2032,9 @@ document.getElementById('configBackBtn').addEventListener('click', () => showVie
 document.getElementById('trainingModeBtn').addEventListener('click', enterTrainingMode);
 document.getElementById('challengeModeBtn').addEventListener('click', enterChallengeMode);
 document.getElementById('newGameBtn').addEventListener('click', startSelectedModeGame);
+document.getElementById('resumeGameBtn').addEventListener('click', resumePausedGame);
+document.getElementById('exitGameBtn').addEventListener('click', exitGameToConfig);
+document.getElementById('endBackToConfigBtn').addEventListener('click', () => showView('config'));
 
 revealToggle.addEventListener('change', ()=>{
   refreshLabelVisibility();
@@ -1672,11 +2062,7 @@ roundsSlider.addEventListener('input', ()=>{
   refreshRoundsLabel();
 });
 document.getElementById('selectAll').addEventListener('click', ()=>{
-  document.querySelectorAll('.digit-row input[type=checkbox]').forEach(cb=>{
-    cb.checked = true;
-    enabledDigits.add(Number(cb.id.replace('grp','')));
-  });
-  refreshDisabledStyling();
+  setEnabledDigitGroups(allDigitGroups());
   if(currentTarget === null) nextQuestion();
 });
 document.getElementById('selectNone').addEventListener('click', ()=>{
@@ -1685,6 +2071,16 @@ document.getElementById('selectNone').addEventListener('click', ()=>{
   refreshDisabledStyling();
   promptText.textContent = 'Enable at least one code group to play.';
   currentTarget = null;
+});
+document.addEventListener('keydown', event => {
+  if(event.key !== 'Escape') return;
+  if(currentView === 'game'){
+    event.preventDefault();
+    pauseCurrentGame();
+  } else if(currentView === 'pause'){
+    event.preventDefault();
+    resumePausedGame();
+  }
 });
 document.getElementById('zoomIn').addEventListener('click', ()=>{
   if(!window.map) return;
