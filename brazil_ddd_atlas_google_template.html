@@ -1907,6 +1907,16 @@ function clearChallengeEndMapOverlays(){
   challengeEndMapOverlays = [];
 }
 
+function challengeGuessPinIcon(label){
+  const fontSize = String(label).length > 2 ? 9 : 11;
+  const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42"><path d="M16 1.5C8.82 1.5 3 7.32 3 14.5c0 9.43 13 25.99 13 25.99s13-16.56 13-25.99C29 7.32 23.18 1.5 16 1.5Z" fill="#ea4335" stroke="#ffffff" stroke-width="2"/><circle cx="16" cy="14.5" r="7.1" fill="#ffffff"/><text x="16" y="18.1" text-anchor="middle" font-family="IBM Plex Sans, Arial, sans-serif" font-size="${fontSize}" font-weight="700" fill="#0e2a3a">${label}</text></svg>`;
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgMarkup)}`,
+    scaledSize: new google.maps.Size(32, 42),
+    anchor: new google.maps.Point(16, 41)
+  };
+}
+
 function renderChallengeMissMap(container, rounds){
   container.textContent = '';
   clearChallengeEndMapOverlays();
@@ -1921,7 +1931,7 @@ function renderChallengeMissMap(container, rounds){
 
   const legend = document.createElement('p');
   legend.className = 'results-legend';
-  legend.innerHTML = '<span><i class="results-dot" style="background:#e4572e"></i>Your guess</span><span><i class="results-dot" style="background:#d4a24c"></i>Target zone</span>';
+  legend.innerHTML = '<span><i class="results-dot" style="background:#ea4335"></i>Your guess pin</span><span><i class="results-dot" style="background:#d4a24c"></i>Target area highlight</span>';
   container.appendChild(legend);
 
   if(!window.google || !google.maps || !google.maps.Map){
@@ -1944,48 +1954,56 @@ function renderChallengeMissMap(container, rounds){
 
     const bounds = new google.maps.LatLngBounds();
     const missedRounds = rounds.filter(round => !round.correct && round.clickedPoint && round.targetPoint);
+    const missedTargets = new Map();
+
+    missedRounds.forEach(round => {
+      const targetInfo = regionEls[round.target] || {};
+      if(!targetInfo.geometry || missedTargets.has(round.target)) return;
+      missedTargets.set(round.target, {
+        geometry: targetInfo.geometry,
+        fillColor: GROUP_COLORS[digitGroupOf(round.target)] || '#d4a24c'
+      });
+    });
+
+    if(missedTargets.size){
+      challengeEndMap.data.setStyle(feature => {
+        const fillColor = feature.getProperty('fillColor') || '#d4a24c';
+        return {
+          fillColor,
+          fillOpacity: 0.36,
+          strokeColor: fillColor,
+          strokeOpacity: 0.95,
+          strokeWeight: 2,
+          clickable: false
+        };
+      });
+      challengeEndMap.data.addGeoJson({
+        type: 'FeatureCollection',
+        features: [...missedTargets.entries()].map(([ddd, info]) => ({
+          type: 'Feature',
+          properties: {
+            ddd,
+            fillColor: info.fillColor
+          },
+          geometry: info.geometry
+        }))
+      });
+      missedTargets.forEach(target => {
+        extendBoundsFromGeometry(bounds, target.geometry);
+      });
+    }
 
     missedRounds.forEach((round, index) => {
       const label = String(round.roundNumber || (index + 1));
       const guessMarker = new google.maps.Marker({
         map: challengeEndMap,
         position: round.clickedPoint,
-        label,
         title: `Round ${label} guess: ${formatDddLabel(round.clicked, round.clickedUf)}`,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: '#e4572e',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
-          scale: 8
-        }
-      });
-      const targetMarker = new google.maps.Marker({
-        map: challengeEndMap,
-        position: round.targetPoint,
-        label,
-        title: `Round ${label} target: ${formatDddLabel(round.target, round.targetUf)}`,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: '#d4a24c',
-          fillOpacity: 1,
-          strokeColor: '#081a24',
-          strokeWeight: 2,
-          scale: 6
-        }
-      });
-      const line = new google.maps.Polyline({
-        map: challengeEndMap,
-        path: [round.clickedPoint, round.targetPoint],
-        strokeColor: '#f2ecd9',
-        strokeOpacity: 0.75,
-        strokeWeight: 2
+        icon: challengeGuessPinIcon(label)
       });
 
-      challengeEndMapOverlays.push(guessMarker, targetMarker, line);
+      challengeEndMapOverlays.push(guessMarker);
       bounds.extend(round.clickedPoint);
-      bounds.extend(round.targetPoint);
     });
 
     if(missedRounds.length){
