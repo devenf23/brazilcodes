@@ -95,6 +95,58 @@
     border-radius: 3px;
     margin: 0 2px;
   }
+  .plate-display{
+    position:absolute;
+    top:136px;
+    right:18px;
+    z-index:14;
+    width:min(360px, calc(100vw - 36px));
+    padding:10px;
+    border:1px solid rgba(212,162,76,0.34);
+    border-radius:10px;
+    background:rgba(8,26,36,0.86);
+    box-shadow:0 12px 30px rgba(0,0,0,0.34);
+    pointer-events:none;
+  }
+  .plate-frame{ position:relative; overflow:hidden; border-radius:6px; background:#d7d7d2; }
+  #plateImage{
+    display:block;
+    width:100%;
+    aspect-ratio:2 / 1;
+    object-fit:cover;
+    transform:scale(var(--plate-scale, 1.025));
+    filter:blur(var(--plate-blur, 7px)) saturate(var(--plate-saturation, .92));
+    user-select:none;
+  }
+  .plate-serial{
+    position:absolute;
+    z-index:2;
+    left:50%;
+    top:52%;
+    transform:translate(-50%, -50%) scale(var(--plate-scale, 1.025));
+    color:#172b35;
+    font:700 clamp(18px, 4vw, 34px)/1 'IBM Plex Mono', monospace;
+    letter-spacing:.08em;
+    white-space:pre;
+    text-shadow:0 1px 0 rgba(255,255,255,.45);
+    filter:blur(var(--plate-blur, 7px));
+    user-select:none;
+  }
+  .plate-tuning{
+    display:none;
+    gap:5px;
+    margin-top:8px;
+    color:var(--fog);
+    font:11px 'IBM Plex Mono', monospace;
+    pointer-events:auto;
+  }
+  .plate-tuning.visible{ display:grid; }
+  .plate-tuning label{ display:grid; grid-template-columns:74px 1fr 38px; gap:6px; align-items:center; }
+  .plate-tuning input{ width:100%; accent-color:var(--gold); }
+  .plate-tuning output{ color:var(--paper); text-align:right; }
+  .plate-tuning-actions{ display:flex; align-items:center; gap:8px; margin-top:3px; }
+  .plate-tuning-actions button{ padding:4px 8px; font-size:10px; }
+  .plate-tuning-status{ min-height:13px; color:var(--gold-bright); }
   .feedback{ font-family:'IBM Plex Sans', sans-serif; font-size: 13.5px; min-height: 18px; }
   .feedback.correct{ color: var(--moss); font-weight:600; }
   .feedback.wrong{ color: var(--coral); font-weight:600; }
@@ -554,6 +606,20 @@
   button:active{ transform: scale(0.97); }
   button.primary{ background: var(--gold); color: var(--ink-deep); border-color: var(--gold); }
   button.primary:hover{ background: var(--gold-bright); }
+  button.primary.loading{ cursor:wait; opacity:.82; }
+  button.primary.loading::after{
+    content:"";
+    display:inline-block;
+    width:11px;
+    height:11px;
+    margin-left:8px;
+    border:2px solid currentColor;
+    border-right-color:transparent;
+    border-radius:50%;
+    vertical-align:-1px;
+    animation:buttonSpin .7s linear infinite;
+  }
+  @keyframes buttonSpin{ to{ transform:rotate(360deg); } }
   button.wide{ width:100%; margin-top: 3px; }
 
   .difficulty-buttons{
@@ -609,6 +675,7 @@
     .end-actions,
     .results-grid{ grid-template-columns:1fr; }
     .difficulty-buttons{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .plate-display{ top:122px; left:50%; right:auto; transform:translateX(-50%); width:min(330px, calc(100vw - 28px)); }
   }
 
   ::selection{ background: var(--gold); color: var(--ink-deep); }
@@ -624,7 +691,7 @@
     <div class="country-card">
       <div class="home-kicker">Phone Geography Atlas</div>
       <h2>Choose a country</h2>
-      <p class="country-note">Explore area-code maps and learn how telephone regions are organized.</p>
+    <p class="country-note">Explore geographic maps and learn how regions, codes, and states are organized.</p>
       <div class="country-grid">
         <button class="country-btn" id="brazilCountryBtn" type="button">
           <strong>Brazil</strong>
@@ -632,7 +699,7 @@
         </button>
         <button class="country-btn" id="usCountryBtn" type="button">
           <strong>United States</strong>
-          <span>Geographic NPA area codes for the 50 states.</span>
+        <span>Geographic NPA area codes and blurred license plates for the 50 states.</span>
         </button>
       </div>
     </div>
@@ -653,9 +720,9 @@
     </div>
   </section>
 
-  <section class="view hidden" id="modeView" aria-label="Area Codes mode selection">
+  <section class="view hidden" id="modeView" aria-label="Game mode selection">
     <div class="mode-card">
-      <div class="mode-kicker">Area Codes</div>
+      <div class="mode-kicker" id="modeGameTag">Area Codes</div>
       <h2>Choose a mode</h2>
       <div class="mode-buttons">
         <button class="mode-btn" id="trainingModeBtn" type="button">Training</button>
@@ -800,6 +867,22 @@
     <div class="feedback" id="feedback"></div>
   </div>
 
+  <div class="plate-display game-ui hidden" id="plateDisplay" aria-live="polite">
+    <div class="plate-frame">
+      <img id="plateImage" alt="Blurred license plate" draggable="false">
+      <span id="plateSerial" aria-hidden="true"></span>
+    </div>
+    <div class="plate-tuning" id="plateTuning" aria-label="Plate blur tuning">
+      <label>Blur <input id="plateBlurSlider" type="range" min="0" max="18" step="0.5"><output id="plateBlurValue">7px</output></label>
+      <label>Scale <input id="plateScaleSlider" type="range" min="1" max="1.12" step="0.005"><output id="plateScaleValue">1.025</output></label>
+      <label>Saturation <input id="plateSaturationSlider" type="range" min="0.5" max="1.3" step="0.01"><output id="plateSaturationValue">0.92</output></label>
+      <div class="plate-tuning-actions">
+        <button id="savePlateDefaults" type="button">Save defaults</button>
+        <span class="plate-tuning-status" id="plateTuningStatus" role="status"></span>
+      </div>
+    </div>
+  </div>
+
   <div class="zoom-controls game-ui hidden">
     <button class="zoom-btn" id="zoomIn" title="Zoom in">+</button>
     <button class="zoom-btn" id="zoomOut" title="Zoom out">–</button>
@@ -856,6 +939,8 @@ const DDD_META = {
 
 const DDD_GEOJSON_URL = 'https://gist.githubusercontent.com/guilhermeprokisch/080c2cb1bd28e8aca54d114e453c91a4/raw/e3af50027ae0fd0b637f4cb60e19552b9f5e0a2a/brazil_phone_area_codes.geojson';
 const US_NPA_GEOJSON_URL = 'https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/USA_Telephone_Area_Codes/FeatureServer/0/query';
+const US_STATE_GEOJSON_URL = 'assets/us-states.geojson';
+const US_STATE_GEOJSON_FALLBACK_URL = 'https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json';
 const US_STATE_CODES = new Set('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' '));
 const countryDataCache = new Map();
 const countryMaskCache = new Map();
@@ -885,7 +970,89 @@ const COUNTRY_CONFIGS = {
     load: loadUsNpaGeoJson
   }
 };
+const US_STATE_NAMES = {
+  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California', CO:'Colorado',
+  CT:'Connecticut', DE:'Delaware', FL:'Florida', GA:'Georgia', HI:'Hawaii', ID:'Idaho',
+  IL:'Illinois', IN:'Indiana', IA:'Iowa', KS:'Kansas', KY:'Kentucky', LA:'Louisiana',
+  ME:'Maine', MD:'Maryland', MA:'Massachusetts', MI:'Michigan', MN:'Minnesota',
+  MS:'Mississippi', MO:'Missouri', MT:'Montana', NE:'Nebraska', NV:'Nevada',
+  NH:'New Hampshire', NJ:'New Jersey', NM:'New Mexico', NY:'New York', NC:'North Carolina',
+  ND:'North Dakota', OH:'Ohio', OK:'Oklahoma', OR:'Oregon', PA:'Pennsylvania',
+  RI:'Rhode Island', SC:'South Carolina', SD:'South Dakota', TN:'Tennessee', TX:'Texas',
+  UT:'Utah', VT:'Vermont', VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin',
+  WY:'Wyoming'
+};
+const LICENSE_PLATE_CONFIG = {
+  name: 'United States',
+  codeLabel: 'state',
+  mapCenter: {lat:38.5, lng:-96},
+  mapZoom: 4,
+  states: false,
+  groupOf: () => null,
+  groupLabel: () => '',
+  load: loadUsPlateGeoJson
+};
+const US_PLATE_VARIANTS = Object.fromEntries([...US_STATE_CODES].map(state => [state, [
+  {id:`${state.toLowerCase()}-standard`, kind:'base', weight:1, image:null}
+]]));
+const US_PLATE_SERIAL_SPECS = {
+  AL:'9A9999A', AK:'AAA 999', AZ:'AAA 9AA', AR:'AAA 99A', CA:'9AAA999', CO:'AAA-9A9',
+  CT:'AA-99999', DE:'999999', FL:'AAA 9A9', GA:'AAA9999', HI:'AAA999', ID:'9A 99999',
+  IL:'AA 99999', IN:'999 AAA', IA:'AAA 999', KS:'9999 AAA', KY:'999 AAA', LA:'999 AAA',
+  ME:'9999 AA', MD:'9AA 9999', MA:'9AAA 99', MI:'AAA 9999', MN:'AAA 999', MS:'AAA 999',
+  MO:'AA9 9A9', MT:'99 9999A', NE:'AAA 999', NV:'999 AAA', NH:'999 9999', NJ:'A99-AAA',
+  NM:'AAA 999', NY:'AAA 9999', NC:'AAA 9999', ND:'AAA 999', OH:'AAA 9999', OK:'AAA 999',
+  OR:'999 AAA', PA:'AAA 9999', RI:'999-999', SC:'AAA 999', SD:'9A9 999', TN:'AAA 9999',
+  TX:'AAA 9999', UT:'AAA 999', VT:'AAA 999', VA:'AAA 9999', WA:'AAA 9999', WV:'9AA 999',
+  WI:'AAA-9999', WY:'9-99999'
+};
+const US_PLATE_IMAGES = {
+  AK:'https://upload.wikimedia.org/wikipedia/commons/e/e4/Alaska_2020_License_Plate.jpg',
+  AR:'https://upload.wikimedia.org/wikipedia/commons/f/fb/Arkansas_2011_license_plate.jpg',
+  CA:'https://upload.wikimedia.org/wikipedia/commons/4/4a/California_2018_License_Plate.jpg',
+  CO:'https://upload.wikimedia.org/wikipedia/commons/0/0d/CO_License_Plate_%282000-2015%29.jpg',
+  CT:'https://upload.wikimedia.org/wikipedia/commons/1/19/2015_to_Present_Connecticut_license_plate.jpg',
+  DE:'https://upload.wikimedia.org/wikipedia/commons/6/66/Delaware_plate%2C_2008_series_with_2013_sticker.png',
+  FL:'https://upload.wikimedia.org/wikipedia/commons/2/2d/Florida_License_Plate_2026-present.jpg',
+  GA:'https://upload.wikimedia.org/wikipedia/commons/3/33/Georgia_RXK8223.jpg',
+  HI:'https://upload.wikimedia.org/wikipedia/commons/f/fc/1991_Hawaii_license_plate_MNG_728.jpg',
+  IA:'https://upload.wikimedia.org/wikipedia/commons/8/84/Iowa_license_plate.jpg',
+  LA:'https://upload.wikimedia.org/wikipedia/commons/e/ea/Louisiana_America_250_license_plate.jpg',
+  MD:'https://upload.wikimedia.org/wikipedia/commons/4/41/Maryland_2016_License_Plate.jpg',
+  MA:'https://upload.wikimedia.org/wikipedia/commons/a/af/Massachusetts_2011_license_plate.png',
+  MI:'https://upload.wikimedia.org/wikipedia/commons/5/56/2017_Michigan_state_license_plate%2C_DNJ-0955.jpg',
+  MN:'https://upload.wikimedia.org/wikipedia/commons/0/0d/ABC_123_currently_MN_plate_from_my_collection.png',
+  MS:'https://upload.wikimedia.org/wikipedia/commons/e/e2/Mississippi_2024_license_plate.jpg',
+  MO:'https://upload.wikimedia.org/wikipedia/commons/3/36/Missouri_Passenger_Car_License_Plate_2020.png',
+  MT:'https://upload.wikimedia.org/wikipedia/commons/c/c6/Montana_2010-present_standard_plate_%28new_font%29.jpg',
+  NV:'https://upload.wikimedia.org/wikipedia/commons/f/fd/NV-plate.jpg',
+  NH:'https://upload.wikimedia.org/wikipedia/commons/7/74/New_Hampshire_license_plate.jpg',
+  NJ:'https://upload.wikimedia.org/wikipedia/commons/9/9b/F92-PEE.JPG',
+  NM:'https://upload.wikimedia.org/wikipedia/commons/1/1e/2019_New_Mexico_License_Plate.jpg',
+  NC:'https://upload.wikimedia.org/wikipedia/commons/5/5a/2020_North_Carolina_License_Plate.png',
+  ND:'https://upload.wikimedia.org/wikipedia/commons/7/76/North_Dakota_license_plate.jpg',
+  OR:'https://upload.wikimedia.org/wikipedia/commons/4/4a/2003_Oregon_License_Plate.jpg',
+  SD:'https://upload.wikimedia.org/wikipedia/commons/4/4c/South_Dakota_license_plate.jpg',
+  TN:'https://upload.wikimedia.org/wikipedia/commons/d/dd/2022_Tennessee_License_Plate_Base_-_Standard_Automobile.png',
+  TX:'https://upload.wikimedia.org/wikipedia/commons/b/b9/Texas_Passenger_Car_License_Plate_2020.png',
+  UT:'https://upload.wikimedia.org/wikipedia/commons/3/39/UTnewfont.png',
+  VT:'https://upload.wikimedia.org/wikipedia/commons/1/18/Vermont_2017_License_Plate.jpg',
+  VA:'https://upload.wikimedia.org/wikipedia/commons/c/c8/Virginia_2016_License_Plate.jpg',
+  WA:'https://upload.wikimedia.org/wikipedia/commons/7/7e/CPU4704_Unembossed_Washington_License_Plate.jpg',
+  WV:'https://upload.wikimedia.org/wikipedia/commons/8/88/West_Virginian_license_plate%2C_c._2021.png',
+  WI:'https://upload.wikimedia.org/wikipedia/commons/7/7b/2024_Wisconsin_Passenger_AXS-2802.jpg',
+  ME:'https://upload.wikimedia.org/wikipedia/commons/a/a3/Sample_license_plate_of_Maine%2C_2025.png',
+  NE:'https://upload.wikimedia.org/wikipedia/en/9/9a/Nebraska_License_Plate_2023_Design.jpg',
+  OH:'https://upload.wikimedia.org/wikipedia/commons/7/72/2021_Ohio_License_Plate.png',
+  RI:'https://upload.wikimedia.org/wikipedia/commons/c/ce/License_Plate_of_Rhode_Island.png'
+};
+const PLATE_TUNING_DEFAULTS = Object.freeze({blur:7, scale:1.025, saturation:0.92});
+Object.entries(US_PLATE_VARIANTS).forEach(([state, variants]) => {
+  variants[0].image = US_PLATE_IMAGES[state] || null;
+  variants[0].serialSpec = US_PLATE_SERIAL_SPECS[state];
+});
 let activeCountryId = 'br';
+let activeGameId = 'areaCodes';
 let activeDataset = null;
 let countryDataReady = false;
 let countryLoadToken = 0;
@@ -897,6 +1064,16 @@ let dddFlashState = new Map();
 let mapReadyForClicks = false;
 var currentMode = 'training';
 let trainingDifficulty = 'easy';
+let currentPlateVariant = null;
+
+function isLicensePlateGame(){ return activeGameId === 'licensePlates' && activeCountryId === 'us'; }
+function activeGameConfig(){ return isLicensePlateGame() ? LICENSE_PLATE_CONFIG : COUNTRY_CONFIGS[activeCountryId]; }
+function activeGameLabel(){ return isLicensePlateGame() ? 'License Plates' : 'Area Codes'; }
+function stateName(code){ return US_STATE_NAMES[code] || STATE_NAMES[code] || code || ''; }
+function regionLabel(code){
+  const info = regionEls[code];
+  return isLicensePlateGame() ? (info?.uf || code) : code;
+}
 
 function extendBoundsFromGeometry(bounds, geometry){
   const type = geometry.type;
@@ -1160,7 +1337,7 @@ function getDddLabelOverlayClass(){
       for(const item of this.items){
         const el = document.createElement('div');
         el.className = 'region-label';
-        el.textContent = item.codes.join('/');
+       el.textContent = item.codes.map(regionLabel).join('/');
         el.style.position = 'absolute';
         el.style.transform = 'translate(-50%, -50%)';
         this.container.appendChild(el);
@@ -1183,7 +1360,8 @@ function getDddLabelOverlayClass(){
         item.el.style.top = `${point.y}px`;
         const peeking = item.codes.some(code => tempLabelReveals.has(code));
         const revealed = item.codes.some(code => solved.has(code));
-        item.el.classList.toggle('show', isStudyDifficulty() || (currentMode !== 'challenge' && revealToggle.checked && revealed) || peeking);
+         item.el.textContent = item.codes.map(regionLabel).join('/');
+         item.el.classList.toggle('show', isStudyDifficulty() || (currentMode !== 'challenge' && revealToggle.checked && revealed) || peeking);
         item.el.classList.toggle('peek-wrong', peeking);
       }
     }
@@ -1260,8 +1438,9 @@ async function loadDddGeoJson(loadToken){
     mapReadyForClicks = true;
     window.map.data.addListener('click', (event) => {
       const kind = event.feature.getProperty('kind');
-      if(kind !== 'ddd' && kind !== 'npa') return;
-      onRegionClick(Number(event.feature.getProperty(kind === 'npa' ? 'code' : 'ddd')), event.latLng);
+       if(kind !== 'ddd' && kind !== 'npa' && kind !== 'plate') return;
+       const property = kind === 'ddd' ? 'ddd' : 'code';
+       onRegionClick(Number(event.feature.getProperty(property)), event.latLng);
     });
   }
   refreshProgressTag();
@@ -1353,8 +1532,95 @@ async function loadUsNpaGeoJson(loadToken){
     mapReadyForClicks = true;
     window.map.data.addListener('click', event => {
       const kind = event.feature.getProperty('kind');
-      if(kind !== 'ddd' && kind !== 'npa') return;
-      onRegionClick(Number(event.feature.getProperty(kind === 'npa' ? 'code' : 'ddd')), event.latLng);
+       if(kind !== 'ddd' && kind !== 'npa' && kind !== 'plate') return;
+       const property = kind === 'ddd' ? 'ddd' : 'code';
+       onRegionClick(Number(event.feature.getProperty(property)), event.latLng);
+    });
+  }
+  refreshProgressTag();
+  nextQuestion();
+  window.map.fitBounds(dddBounds, 32);
+}
+
+async function loadUsPlateGeoJson(loadToken){
+  clearActiveCountryLayer();
+  let responsePromise = countryDataCache.get('us-states');
+  if(!responsePromise){
+    responsePromise = (async () => {
+      let lastError = null;
+      for(const url of [US_STATE_GEOJSON_URL, US_STATE_GEOJSON_FALLBACK_URL]){
+        try{
+          const response = await fetch(url);
+          if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+          return await response.json();
+        } catch(err){
+          lastError = err;
+          console.warn(`Unable to load US state geometry from ${url}.`, err);
+        }
+      }
+      throw new Error(`Failed to load US state geometry: ${lastError?.message || 'network error'}`);
+    })().catch(err => {
+      countryDataCache.delete('us-states');
+      throw err;
+    });
+    countryDataCache.set('us-states', responsePromise);
+  }
+  const geojson = await responsePromise;
+  if(loadToken !== countryLoadToken || !isLicensePlateGame()) return;
+
+  const byState = new Map();
+  geojson.features
+    .map(feature => ({feature, state:Object.entries(US_STATE_NAMES).find(([, name]) => name === feature.properties?.name)?.[0]}))
+    .filter(({state}) => US_STATE_CODES.has(state))
+    .forEach(({feature, state}) => {
+      const current = byState.get(state) || {state, geometries:[]};
+      current.geometries.push(feature.geometry);
+      byState.set(state, current);
+    });
+  if(byState.size !== US_STATE_CODES.size) throw new Error('US state dataset returned incomplete state geometry.');
+
+  dddBounds = new google.maps.LatLngBounds();
+  const mapFeatures = [];
+  const stateEntries = [...byState.values()].sort((a, b) => a.state.localeCompare(b.state));
+  stateEntries.forEach((info, index) => {
+    const geometry = info.geometries.length === 1
+      ? info.geometries[0]
+      : {type:'MultiPolygon', coordinates:info.geometries.flatMap(geometry => geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates)};
+    const anchor = geometryAnchor(geometry);
+    extendBoundsFromGeometry(dddBounds, geometry);
+    const code = index + 1;
+    mapFeatures.push({type:'Feature', properties:{kind:'plate', code, state:info.state}, geometry});
+    regionEls[code] = {
+      code,
+      uf: info.state,
+      feature: null,
+      geometry,
+      anchor: anchor ? new google.maps.LatLng(anchor.lat, anchor.lng) : null,
+      label: null
+    };
+  });
+
+  const addedFeatures = window.map.data.addGeoJson({type:'FeatureCollection', features:mapFeatures});
+  addedFeatures.forEach(feature => {
+    const code = Number(feature.getProperty('code'));
+    if(regionEls[code]) regionEls[code].feature = feature;
+  });
+  const items = Object.values(regionEls).filter(info => info.anchor).map(info => ({codes:[info.code], anchor:info.anchor}));
+  const OverlayClass = getDddLabelOverlayClass();
+  if(!OverlayClass) throw new Error('Google Maps OverlayView unavailable');
+  if(dddLabelOverlay) dddLabelOverlay.setMap(null);
+  dddLabelOverlay = new OverlayClass(items);
+  dddLabelOverlay.setMap(window.map);
+  activeDataset = {regions:Object.values(regionEls).map(info => ({code:info.code, uf:info.uf, geometry:info.geometry, anchor:info.anchor})), groups:null};
+  countryDataReady = true;
+  rebuildCodeGroups();
+  if(!mapReadyForClicks){
+    mapReadyForClicks = true;
+    window.map.data.addListener('click', event => {
+      const kind = event.feature.getProperty('kind');
+      if(kind !== 'ddd' && kind !== 'npa' && kind !== 'plate') return;
+      const property = kind === 'ddd' ? 'ddd' : 'code';
+      onRegionClick(Number(event.feature.getProperty(property)), event.latLng);
     });
   }
   refreshProgressTag();
@@ -1369,7 +1635,7 @@ function clearActiveCountryLayer(){
     const remove = [];
     window.map.data.forEach(feature => {
       const kind = feature.getProperty('kind');
-      if(kind === 'ddd' || kind === 'npa') remove.push(feature);
+       if(kind === 'ddd' || kind === 'npa' || kind === 'plate') remove.push(feature);
     });
     remove.forEach(feature => window.map.data.remove(feature));
   }
@@ -1381,28 +1647,38 @@ function clearActiveCountryLayer(){
   digitGroupsEl.textContent = '';
   solved = new Set();
   currentTarget = null;
+  currentPlateVariant = null;
 }
 
 function loadActiveCountry(){
-  const config = COUNTRY_CONFIGS[activeCountryId];
+  const config = activeGameConfig();
   if(!config || !window.map) return Promise.resolve();
+  const loadKey = `${activeCountryId}:${activeGameId}`;
+  if(activeLoadPromise && activeLoadKey === loadKey) return activeLoadPromise;
   const countryId = activeCountryId;
   const loadToken = ++countryLoadToken;
+  activeLoadKey = loadKey;
   countryDataReady = false;
-  newGameBtn.disabled = true;
-  homeNote.textContent = `Loading ${config.name} area-code data...`;
-  return config.load(loadToken).then(() => {
+  homeNote.textContent = `Loading ${activeGameLabel().toLowerCase()} data...`;
+  activeLoadPromise = config.load(loadToken).then(() => {
     if(loadToken !== countryLoadToken || activeCountryId !== countryId) return;
-    newGameBtn.disabled = false;
+    refreshStartButton();
     refreshCountryCopy();
+    if(currentView === 'home') refreshHomeCarousel();
   }).catch(err => {
     console.error(err);
     if(loadToken === countryLoadToken){
-      promptText.textContent = `Failed to load ${config.name} area-code data.`;
-      homeNote.textContent = `Unable to load ${config.name} area-code data.`;
+      promptText.textContent = `Failed to load ${activeGameLabel().toLowerCase()} data.`;
+      homeNote.textContent = `Unable to load ${activeGameLabel().toLowerCase()} data.`;
     }
     throw err;
+  }).finally(() => {
+    if(loadToken === countryLoadToken){
+      activeLoadPromise = null;
+      activeLoadKey = null;
+    }
   });
+  return activeLoadPromise;
 }
 
 async function loadCountryGeoJson(){
@@ -1457,6 +1733,7 @@ const statesView = document.getElementById('statesView');
 const pauseView = document.getElementById('pauseView');
 const endView = document.getElementById('endView');
 const configModeTag = document.getElementById('configModeTag');
+const modeGameTag = document.getElementById('modeGameTag');
 const configModeNote = document.getElementById('configModeNote');
 const pauseModeTag = document.getElementById('pauseModeTag');
 const endModeTag = document.getElementById('endModeTag');
@@ -1476,6 +1753,18 @@ const homePrev = document.getElementById('homePrev');
 const homeNext = document.getElementById('homeNext');
 const homeNote = document.getElementById('homeNote');
 const gameUiEls = document.querySelectorAll('.game-ui');
+const plateDisplay = document.getElementById('plateDisplay');
+const plateImage = document.getElementById('plateImage');
+const plateSerial = document.getElementById('plateSerial');
+const plateTuning = document.getElementById('plateTuning');
+const plateBlurSlider = document.getElementById('plateBlurSlider');
+const plateScaleSlider = document.getElementById('plateScaleSlider');
+const plateSaturationSlider = document.getElementById('plateSaturationSlider');
+const plateBlurValue = document.getElementById('plateBlurValue');
+const plateScaleValue = document.getElementById('plateScaleValue');
+const plateSaturationValue = document.getElementById('plateSaturationValue');
+const savePlateDefaultsBtn = document.getElementById('savePlateDefaults');
+const plateTuningStatus = document.getElementById('plateTuningStatus');
 
 let score = {correct:0, total:0, streak:0, points:0, lastPoints:0};
 let solved = new Set();
@@ -1499,6 +1788,10 @@ let trainingMisses = [];
 let trainingStatesSeen = new Set();
 let challengeEndMap = null;
 let challengeEndMapOverlays = [];
+let activeLoadPromise = null;
+let activeLoadKey = null;
+let startingGame = false;
+let plateImageReadyPromise = Promise.resolve();
 
 const DIFFICULTY_SETTINGS = {
   easy: { borders: true, colors: true, reveal: true },
@@ -1515,6 +1808,61 @@ const STATE_NAMES = {
   SC:'Santa Catarina', SE:'Sergipe', SP:'São Paulo', TO:'Tocantins'
 };
 
+function updatePlateTuning(){
+  if(!plateImage) return;
+  plateImage.style.setProperty('--plate-blur', `${plateBlurSlider.value}px`);
+  plateImage.style.setProperty('--plate-scale', plateScaleSlider.value);
+  plateImage.style.setProperty('--plate-saturation', plateSaturationSlider.value);
+  plateBlurValue.textContent = `${plateBlurSlider.value}px`;
+  plateScaleValue.textContent = Number(plateScaleSlider.value).toFixed(3);
+  plateSaturationValue.textContent = Number(plateSaturationSlider.value).toFixed(2);
+}
+
+function initializePlateTuning(){
+  plateBlurSlider.value = PLATE_TUNING_DEFAULTS.blur;
+  plateScaleSlider.value = PLATE_TUNING_DEFAULTS.scale;
+  plateSaturationSlider.value = PLATE_TUNING_DEFAULTS.saturation;
+  updatePlateTuning();
+}
+
+function plateTuningSourceSnippet(){
+  return `const PLATE_TUNING_DEFAULTS = Object.freeze({blur:${Number(plateBlurSlider.value)}, scale:${Number(plateScaleSlider.value)}, saturation:${Number(plateSaturationSlider.value)}});`;
+}
+
+async function savePlateDefaults(){
+  const snippet = plateTuningSourceSnippet();
+  if(!window.showOpenFilePicker){
+    try{ await navigator.clipboard?.writeText(snippet); } catch(err){ console.warn('Unable to copy plate tuning source snippet.', err); }
+    plateTuningStatus.textContent = 'Source snippet copied';
+    return;
+  }
+  try{
+    const [handle] = await window.showOpenFilePicker({
+      multiple:false,
+      types:[{description:'HTML source', accept:{'text/html':['.html']}}]
+    });
+    const file = await handle.getFile();
+    const source = await file.text();
+    const defaultsPattern = /const PLATE_TUNING_DEFAULTS = Object\.freeze\(\{[^}]+\}\);/;
+    if(!defaultsPattern.test(source)) throw new Error('PLATE_TUNING_DEFAULTS was not found in the selected file.');
+    const updatedSource = source.replace(defaultsPattern, snippet);
+    const writable = await handle.createWritable();
+    await writable.write(updatedSource);
+    await writable.close();
+    plateTuningStatus.textContent = 'Defaults saved to source';
+  } catch(err){
+    if(err?.name === 'AbortError') return;
+    console.error(err);
+    plateTuningStatus.textContent = 'Save failed; source snippet copied';
+    try{ await navigator.clipboard?.writeText(snippet); } catch(copyErr){ console.warn('Unable to copy plate tuning source snippet.', copyErr); }
+  }
+}
+
+function refreshPlateDisplay(){
+  const visible = isLicensePlateGame() && currentView === 'game' && !!currentPlateVariant;
+  plateDisplay.classList.toggle('hidden', !visible);
+}
+
 function showView(view){
   currentView = view;
   countryView.classList.toggle('hidden', view !== 'countries');
@@ -1525,6 +1873,8 @@ function showView(view){
   pauseView.classList.toggle('hidden', view !== 'pause');
   endView.classList.toggle('hidden', view !== 'end');
   gameUiEls.forEach(el => el.classList.toggle('hidden', view !== 'game'));
+  refreshPlateDisplay();
+  if(view === 'modes') modeGameTag.textContent = activeGameLabel();
   if(view === 'config') refreshConfigModeCopy();
   if(view === 'states') {
     if(!COUNTRY_CONFIGS[activeCountryId].states) return showView('home');
@@ -1552,16 +1902,21 @@ function applyModeUi(){
 
 function refreshConfigModeCopy(){
   const challenge = currentMode === 'challenge';
-  const config = COUNTRY_CONFIGS[activeCountryId];
-  const modeLabel = `${config.name} ${config.codeLabel} · ${challenge ? 'Challenge' : 'Training'}`;
+  const config = activeGameConfig();
+  const modeLabel = `${activeGameLabel()} · ${challenge ? 'Challenge' : 'Training'}`;
+  borderToggleRow.querySelector('span').textContent = isLicensePlateGame() ? 'State borders' : 'Area code borders';
+  revealToggleRow.querySelector('span').textContent = isLicensePlateGame() ? 'Reveal found states' : 'Reveal found codes';
   configModeTag.textContent = modeLabel;
+  configView.setAttribute('aria-label', `${activeGameLabel()} configuration`);
+  modeView.setAttribute('aria-label', `${activeGameLabel()} mode selection`);
+  modeGameTag.textContent = activeGameLabel();
   pauseModeTag.textContent = modeLabel;
   endModeTag.textContent = modeLabel;
   configModeNote.textContent = challenge
-    ? `Challenge uses all ${config.codeLabel} zones and lets you tune the timer and round count before starting.`
+     ? `Challenge uses all ${isLicensePlateGame() ? 'states' : `${config.codeLabel} zones`} and lets you tune the timer and round count before starting.`
     : isStudyDifficulty()
-      ? `Study shows every ${config.codeLabel} and disables questions, scoring, and progress.`
-      : `Tune the training settings and ${config.codeLabel} groups before starting.`;
+       ? `Study shows every ${isLicensePlateGame() ? 'state' : config.codeLabel} and disables questions, scoring, and progress.`
+       : isLicensePlateGame() ? 'Tune the training settings before identifying each state.' : `Tune the training settings and ${config.codeLabel} groups before starting.`;
   difficultyPanel.classList.toggle('hidden', challenge);
   challengePanel.classList.toggle('hidden', !challenge);
   roundsPanel.classList.toggle('hidden', !challenge);
@@ -1571,8 +1926,8 @@ function refreshConfigModeCopy(){
   challengeConfigStack.classList.toggle('hidden', !challenge);
   trainingConfigStack.classList.toggle('hidden', challenge);
   trainingNote.textContent = isStudyDifficulty()
-    ? 'Study mode shows every code and disables questions, scoring, and progress.'
-    : 'Solved codes drop out of the question pool — each one is asked once per game.';
+    ? `Study mode shows every ${isLicensePlateGame() ? 'state' : 'code'} and disables questions, scoring, and progress.`
+    : 'Solved regions drop out of the question pool — each one is asked once per game.';
   const study = isStudyDifficulty();
   borderToggle.disabled = study;
   colorToggle.disabled = study;
@@ -1580,13 +1935,14 @@ function refreshConfigModeCopy(){
   selectAllBtn.disabled = study;
   selectNoneBtn.disabled = study;
   [borderToggleRow, colorToggleRow, revealToggleRow].forEach(row => row.classList.toggle('disabled', study));
+  refreshStartButton();
 }
 
 function refreshCountryCopy(){
-  const config = COUNTRY_CONFIGS[activeCountryId];
+  const config = activeGameConfig();
   appKicker.textContent = `${config.name} · Phone Geography Atlas`;
-  appTitle.textContent = `${config.codeLabel} Area Code Atlas`;
-  regionCountTag.textContent = `${activeDataset?.regions.length || 0} regions`;
+  appTitle.textContent = isLicensePlateGame() ? 'License Plate State Game' : `${config.codeLabel} Area Code Atlas`;
+  regionCountTag.textContent = `${activeDataset?.regions.length || 0} ${isLicensePlateGame() ? 'states' : 'regions'}`;
 }
 
 function allDigitGroups(){
@@ -1611,6 +1967,7 @@ function setEnabledDigitGroups(groups){
 
 function saveTrainingConfiguration(){
   savedTrainingSettings = {
+    gameId: activeGameId,
     difficulty: trainingDifficulty,
     borders: borderToggle.checked,
     colors: colorToggle.checked,
@@ -1621,7 +1978,7 @@ function saveTrainingConfiguration(){
 
 function enterTrainingMode(){
   currentMode = 'training';
-  if(savedTrainingSettings){
+  if(savedTrainingSettings?.gameId === activeGameId){
     trainingDifficulty = savedTrainingSettings.difficulty || 'easy';
     borderToggle.checked = savedTrainingSettings.borders;
     colorToggle.checked = savedTrainingSettings.colors;
@@ -1656,31 +2013,72 @@ function enterChallengeMode(){
 }
 
 function startSelectedModeGame(){
-  restartGame();
-  showView('game');
+  if(startingGame) return;
+  startingGame = true;
+  refreshStartButton();
+  configModeNote.textContent = `Loading ${activeGameLabel().toLowerCase()}...`;
+  Promise.resolve()
+    .then(() => {
+      if(countryDataReady && activeDataset) return;
+      return loadActiveCountry();
+    })
+    .then(() => {
+      if(!countryDataReady || !activeDataset) throw new Error('Game data is not ready.');
+      restartGame();
+      return plateImageReadyPromise;
+    })
+    .then(() => {
+      showView('game');
+    })
+    .catch(err => {
+      console.error(err);
+      configModeNote.textContent = `Unable to start ${activeGameLabel().toLowerCase()}. Try again.`;
+    })
+    .finally(() => {
+      startingGame = false;
+      refreshStartButton();
+    });
+}
+
+function refreshStartButton(){
+  newGameBtn.classList.toggle('loading', startingGame);
+  newGameBtn.setAttribute('aria-busy', startingGame ? 'true' : 'false');
+  newGameBtn.textContent = startingGame ? 'Loading' : 'Start game';
+  newGameBtn.disabled = startingGame;
 }
 
 function refreshHomeCarousel(){
-  const isStates = selectedHomeGame === 'states';
-  homeTitle.textContent = isStates ? 'States' : 'Area Codes';
-  homePrev.classList.toggle('invisible', !isStates);
-  homeNext.classList.toggle('invisible', isStates);
-  homeNote.textContent = isStates
+  const options = activeCountryId === 'us' ? ['areaCodes', 'licensePlates'] : ['areaCodes', 'states'];
+  const index = Math.max(0, options.indexOf(selectedHomeGame));
+  selectedHomeGame = options[index];
+  const labels = {areaCodes:'Area Codes', states:'States', licensePlates:'License Plates'};
+  homeTitle.textContent = labels[selectedHomeGame];
+  homePrev.classList.toggle('invisible', index === 0);
+  homeNext.classList.toggle('invisible', index === options.length - 1);
+  homePrev.setAttribute('aria-label', `Show ${labels[options[Math.max(0, index - 1)]]}`);
+  homeNext.setAttribute('aria-label', `Show ${labels[options[Math.min(options.length - 1, index + 1)]]}`);
+  homeNote.textContent = selectedHomeGame === 'states'
     ? 'Select States to preview the future states map.'
-    : `Select Area Codes to choose a play mode in ${COUNTRY_CONFIGS[activeCountryId].name}.`;
+    : selectedHomeGame === 'licensePlates'
+      ? 'Select License Plates to identify U.S. states from blurred plates.'
+      : `Select Area Codes to choose a play mode in ${COUNTRY_CONFIGS[activeCountryId].name}.`;
 }
 
 function switchHomeGame(nextGame){
   if(titleAnimating || selectedHomeGame === nextGame) return;
+  const options = activeCountryId === 'us' ? ['areaCodes', 'licensePlates'] : ['areaCodes', 'states'];
+  if(!options.includes(nextGame)) return;
   titleAnimating = true;
-  const toStates = nextGame === 'states';
+  const movingForward = options.indexOf(nextGame) > options.indexOf(selectedHomeGame);
   homeTitle.classList.remove('slide-in-left', 'slide-in-right', 'slide-out-left', 'slide-out-right');
-  homeTitle.classList.add(toStates ? 'slide-out-left' : 'slide-out-right');
+  homeTitle.classList.add(movingForward ? 'slide-out-left' : 'slide-out-right');
   setTimeout(() => {
     selectedHomeGame = nextGame;
+    activeGameId = selectedHomeGame === 'licensePlates' ? 'licensePlates' : 'areaCodes';
     refreshHomeCarousel();
     homeTitle.classList.remove('slide-out-left', 'slide-out-right');
-    homeTitle.classList.add(toStates ? 'slide-in-right' : 'slide-in-left');
+    homeTitle.classList.add(movingForward ? 'slide-in-right' : 'slide-in-left');
+    if(activeCountryId === 'us' && window.map) void loadActiveCountry().then(refreshCountryCopy);
     setTimeout(() => {
       homeTitle.classList.remove('slide-in-left', 'slide-in-right');
       titleAnimating = false;
@@ -1703,12 +2101,13 @@ function buildStatesPlaceholder(){
 function selectCountry(countryId){
   if(!COUNTRY_CONFIGS[countryId]) return;
   activeCountryId = countryId;
+  activeGameId = 'areaCodes';
   const config = COUNTRY_CONFIGS[countryId];
   selectedHomeGame = 'areaCodes';
   homeTitle.textContent = 'Area Codes';
   homeKicker.textContent = `${config.name} · Phone Geography Atlas`;
   homePrev.classList.add('invisible');
-  homeNext.classList.toggle('invisible', !config.states);
+  refreshHomeCarousel();
   homeNote.textContent = `Select Area Codes to choose a play mode in ${config.name}.`;
   statesView.querySelector('h2').textContent = `${config.name} states map`;
   statesView.querySelector('p').textContent = config.states
@@ -2202,6 +2601,68 @@ function activeDDDs(){
     });
 }
 
+function pickWeightedVariant(state){
+  const variants = US_PLATE_VARIANTS[state] || [];
+  if(!variants.length) return null;
+  const total = variants.reduce((sum, variant) => sum + Math.max(0, Number(variant.weight) || 0), 0);
+  if(!total) return variants[0];
+  let cursor = Math.random() * total;
+  return variants.find(variant => (cursor -= Math.max(0, Number(variant.weight) || 0)) < 0) || variants[variants.length - 1];
+}
+
+function generateSerial(state, variant){
+  const pattern = variant?.serialSpec || US_PLATE_SERIAL_SPECS[state] || 'AAA 999';
+  const letters = 'ABCDEFGHJKLMNPRSTUVWXYZ';
+  return [...pattern].map(char => {
+    if(char === 'A') return letters[Math.floor(Math.random() * letters.length)];
+    if(char === '9') return String(Math.floor(Math.random() * 10));
+    return char;
+  }).join('');
+}
+
+function escapeXml(value){
+  return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&apos;'}[char]));
+}
+
+function plateImageUrl(state, variant){
+  if(variant?.image) return variant.image;
+  const palettes = [
+    ['#f7f4e8','#123b59','#c83d35'], ['#f4e7bd','#173f5c','#b74b34'],
+    ['#e8f1f2','#1f5269','#c57c32'], ['#f2efe2','#183b33','#bd3d42'],
+    ['#e7edf3','#243d66','#b06b3d']
+  ];
+  const palette = palettes[[...US_STATE_CODES].sort().indexOf(state) % palettes.length];
+  const name = escapeXml(stateName(state));
+  const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="${palette[0]}"/><stop offset="1" stop-color="#c8d0ca"/></linearGradient></defs><rect width="600" height="300" rx="22" fill="url(#g)"/><rect x="12" y="12" width="576" height="276" rx="16" fill="none" stroke="${palette[1]}" stroke-width="8"/><path d="M24 214 C145 168 195 185 280 215 S445 255 576 178 V288 H24Z" fill="${palette[1]}" opacity=".22"/><circle cx="300" cy="116" r="44" fill="${palette[2]}" opacity=".8"/><text x="300" y="42" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="${palette[1]}" letter-spacing="3">${name.toUpperCase()}</text><text x="300" y="254" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="${palette[1]}" letter-spacing="4">${escapeXml(variant?.kind === 'base' ? 'STANDARD' : 'SPECIALTY')}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgMarkup)}`;
+}
+
+function renderPlateForTarget(){
+  if(!isLicensePlateGame() || currentTarget === null) return;
+  const state = regionEls[currentTarget]?.uf;
+  if(!state) return;
+  currentPlateVariant = pickWeightedVariant(state);
+  plateImage.src = plateImageUrl(state, currentPlateVariant);
+  plateImageReadyPromise = new Promise((resolve, reject) => {
+    if(plateImage.complete && plateImage.naturalWidth > 0){
+      resolve();
+      return;
+    }
+    plateImage.onload = () => resolve();
+    plateImage.onerror = () => reject(new Error('License plate image failed to load.'));
+  }).catch(() => {
+    if(currentPlateVariant) currentPlateVariant.image = null;
+    plateImage.src = plateImageUrl(state, currentPlateVariant);
+    return new Promise((resolve, reject) => {
+      plateImage.onload = () => resolve();
+      plateImage.onerror = () => reject(new Error('License plate fallback failed to load.'));
+    });
+  });
+  plateSerial.textContent = generateSerial(state, currentPlateVariant);
+  plateImage.alt = 'Blurred license plate';
+  refreshPlateDisplay();
+}
+
 function nextQuestion(){
   if(gameEnded) return;
   if(!countryDataReady || !activeDataset) return;
@@ -2209,7 +2670,9 @@ function nextQuestion(){
     currentTarget = null;
     feedback.textContent = '';
     feedback.className = 'feedback';
-    promptText.textContent = `Study mode — all ${COUNTRY_CONFIGS[activeCountryId].codeLabel} codes are visible.`;
+    promptText.textContent = `Study mode — all ${isLicensePlateGame() ? 'states' : COUNTRY_CONFIGS[activeCountryId].codeLabel + ' codes'} are visible.`;
+    currentPlateVariant = null;
+    refreshPlateDisplay();
     refreshLabelVisibility();
     return;
   }
@@ -2225,8 +2688,8 @@ function nextQuestion(){
   }
   const pool = activeDDDs();
   if(pool.length === 0){
-    const anyEnabled = enabledDigits.size > 0;
-    if(anyEnabled){
+    const hasGroups = activeDataset.groups !== null;
+    if(!hasGroups || enabledDigits.size > 0){
       finishGame('complete');
     } else {
       promptText.textContent = 'Enable at least one code group to play.';
@@ -2236,8 +2699,11 @@ function nextQuestion(){
   }
   roundsPlayed++;
   currentTarget = pool[Math.floor(Math.random()*pool.length)];
+  if(isLicensePlateGame()) renderPlateForTarget();
   if(currentMode === 'training' && regionEls[currentTarget]) trainingStatesSeen.add(regionEls[currentTarget].uf);
-  promptText.innerHTML = `Click ${COUNTRY_CONFIGS[activeCountryId].codeLabel} <span class="ddd-num">${currentTarget}</span> on the map`;
+  promptText.innerHTML = isLicensePlateGame()
+    ? 'Which state is this plate from?'
+    : `Click ${COUNTRY_CONFIGS[activeCountryId].codeLabel} <span class="ddd-num">${currentTarget}</span> on the map`;
 }
 
 function flash(ddd, cls, duration){
@@ -2265,9 +2731,10 @@ function markSolved(ddd){
 }
 
 function formatDddLabel(ddd, uf){
-  const stateName = STATE_NAMES[uf] || uf;
+  if(isLicensePlateGame()) return stateName(uf);
+  const name = STATE_NAMES[uf] || uf;
   const label = COUNTRY_CONFIGS[activeCountryId].codeLabel;
-  return stateName ? `${label} ${ddd} (${stateName})` : `${label} ${ddd}`;
+  return name ? `${label} ${ddd} (${name})` : `${label} ${ddd}`;
 }
 
 function formatDistanceKm(distanceKm){
@@ -2382,8 +2849,8 @@ function renderChallengeMissMap(container, rounds){
 
   requestAnimationFrame(() => {
     challengeEndMap = new google.maps.Map(mapEl, {
-      center: {lat:-14.2, lng:-51.9},
-      zoom: 4,
+       center: activeGameConfig().mapCenter,
+       zoom: activeGameConfig().mapZoom,
       mapTypeId: 'roadmap',
       streetViewControl: false,
       fullscreenControl: false,
@@ -2464,8 +2931,8 @@ function renderChallengeMissMap(container, rounds){
     if(missedRounds.length){
       challengeEndMap.fitBounds(bounds, 72);
     } else {
-      challengeEndMap.setCenter({lat:-14.2, lng:-51.9});
-      challengeEndMap.setZoom(4);
+       challengeEndMap.setCenter(activeGameConfig().mapCenter);
+       challengeEndMap.setZoom(activeGameConfig().mapZoom);
       const empty = document.createElement('p');
       empty.className = 'results-empty';
       empty.textContent = 'Perfect run. No missed guesses to map.';
@@ -2498,16 +2965,16 @@ function renderEndScreen(reason){
   clearChallengeEndMapOverlays();
   challengeEndMap = null;
   const trainingStates = [...trainingStatesSeen]
-    .map(uf => STATE_NAMES[uf] || uf)
+    .map(uf => stateName(uf))
     .sort((a, b) => a.localeCompare(b));
   endTitle.textContent = 'Training complete';
-  endSummary.textContent = `You found ${solved.size} zones and missed ${trainingMisses.length} rounds.`;
+   endSummary.textContent = `You found ${solved.size} ${isLicensePlateGame() ? 'states' : 'zones'} and missed ${trainingMisses.length} rounds.`;
   renderStatCells([
     { label: 'Found', value: String(solved.size) },
     { label: 'Misses', value: String(trainingMisses.length) },
     { label: 'States', value: String(trainingStates.length) }
   ]);
-  endPrimaryTitle.textContent = 'States covered';
+   endPrimaryTitle.textContent = isLicensePlateGame() ? 'States covered' : 'States covered';
   renderStateChips(endPrimaryContent, trainingStates);
   endSecondarySection.style.display = '';
   endSecondaryTitle.textContent = 'Missed rounds';
@@ -2564,7 +3031,9 @@ function onRegionClick(clickedDdd, clickLatLng){
   if(currentTarget === null) return;
   if(currentMode === 'challenge' && challengeExpired) return;
   score.total++;
-  const uf = regionEls[clickedDdd].uf;
+  const clickedInfo = regionEls[clickedDdd];
+  if(!clickedInfo) return;
+  const uf = clickedInfo.uf;
   if(currentMode === 'challenge'){
     const roundResult = challengeResultForGuess(clickedDdd, clickLatLng);
     roundResult.roundNumber = score.total;
@@ -2573,9 +3042,9 @@ function onRegionClick(clickedDdd, clickLatLng){
     if(clickedDdd === currentTarget) score.correct++;
     const wasCorrect = clickedDdd === currentTarget;
     challengeRoundResults.push(roundResult);
-    feedback.textContent = wasCorrect
-      ? `Correct — ${COUNTRY_CONFIGS[activeCountryId].codeLabel} ${currentTarget} for 5000 points`
-      : `Wrong — ${COUNTRY_CONFIGS[activeCountryId].codeLabel} ${clickedDdd} scored ${roundResult.points} points`;
+     feedback.textContent = wasCorrect
+       ? `Correct — ${formatDddLabel(currentTarget, regionEls[currentTarget]?.uf)} for 5000 points`
+       : `Wrong — ${formatDddLabel(clickedDdd, uf)} scored ${roundResult.points} points`;
     feedback.className = wasCorrect ? 'feedback correct' : 'feedback wrong';
     flash(clickedDdd, wasCorrect ? 'correct-flash' : 'wrong-flash', 650);
     if(!wasCorrect) peekLabel(clickedDdd, 750);
@@ -2587,7 +3056,7 @@ function onRegionClick(clickedDdd, clickLatLng){
   if(clickedDdd === currentTarget){
     score.correct++;
     score.streak++;
-    feedback.textContent = `Correct — ${formatDddLabel(currentTarget, uf)}`;
+     feedback.textContent = `Correct — ${formatDddLabel(currentTarget, regionEls[currentTarget]?.uf)}`;
     feedback.className = 'feedback correct';
     flash(currentTarget, 'correct-flash', 700);
     markSolved(currentTarget);
@@ -2629,6 +3098,7 @@ function restartGame(){
   challengeRoundResults = [];
   trainingMisses = [];
   trainingStatesSeen = new Set();
+  currentPlateVariant = null;
   if(isStudyDifficulty()){
     currentTarget = null;
     refreshLabelVisibility();
@@ -2651,7 +3121,7 @@ function restartGame(){
 document.getElementById('brazilCountryBtn').addEventListener('click', () => selectCountry('br'));
 document.getElementById('usCountryBtn').addEventListener('click', () => selectCountry('us'));
 document.getElementById('homeBackBtn').addEventListener('click', () => showView('countries'));
-homeNext.addEventListener('click', () => switchHomeGame('states'));
+homeNext.addEventListener('click', () => switchHomeGame(activeCountryId === 'us' ? 'licensePlates' : 'states'));
 homePrev.addEventListener('click', () => switchHomeGame('areaCodes'));
 homeTitle.addEventListener('click', () => {
   showView(selectedHomeGame === 'states' ? 'states' : 'modes');
@@ -2726,6 +3196,11 @@ document.getElementById('zoomReset').addEventListener('click', ()=>{
   if(!window.map) return;
   if(dddBounds) window.map.fitBounds(dddBounds, 32);
 });
+
+[plateBlurSlider, plateScaleSlider, plateSaturationSlider].forEach(input => input.addEventListener('input', updatePlateTuning));
+initializePlateTuning();
+savePlateDefaultsBtn.addEventListener('click', savePlateDefaults);
+if(new URLSearchParams(window.location.search).get('plateDebug') === '1') plateTuning.classList.add('visible');
 
 /* ---------- Init ---------- */
 </script>

@@ -26,6 +26,7 @@ jobs:
         run: |
           mkdir -p public
           cp brazil_ddd_atlas_google_template.html public/index.html
+          cp -R assets public/assets
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
