@@ -455,6 +455,18 @@
   }
   .region-label.show{ opacity: 1; }
 
+  .plate-pin{
+    position:absolute;
+    width:min(96px, 7vw);
+    aspect-ratio:2 / 1;
+    object-fit:cover;
+    border-radius:3px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.55);
+    pointer-events:none;
+    user-select:none;
+    filter:blur(var(--plate-blur, 18px)) saturate(var(--plate-saturation, .92));
+  }
+
   .panel{ padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(242,236,217,0.12); }
   .panel:last-child{ border-bottom: none; margin-bottom: 4px; }
   .panel h2{
@@ -893,10 +905,24 @@ function initMap(){
   if(currentView !== 'countries') void loadActiveCountry();
 }
 
-function loadGoogleMapsApi(){
-  const key = new URLSearchParams(window.location.search).get('key');
+async function loadGoogleMapsKeyFromEnv(){
+  try{
+    const response = await fetch('.env', {cache:'no-store'});
+    if(!response.ok) return null;
+    const text = await response.text();
+    const match = /(?:^|\n)\s*(?:export\s+)?API_KEY\s*=\s*["']?([A-Za-z0-9._~-]+)["']?\s*(?:\n|$)/.exec(text);
+    return match ? match[1] : null;
+  }catch(err){
+    console.warn('Unable to read API key from .env.', err);
+    return null;
+  }
+}
+
+async function loadGoogleMapsApi(){
+  let key = new URLSearchParams(window.location.search).get('key');
+  if(!key) key = await loadGoogleMapsKeyFromEnv();
   if(!key){
-    promptText.textContent = 'Missing Google Maps API key. Open this page with ?key=YOUR_API_KEY';
+    promptText.textContent = 'Missing Google Maps API key. Add API_KEY to .env or open this page with ?key=YOUR_API_KEY';
     return;
   }
   const script = document.createElement('script');
@@ -919,6 +945,7 @@ const DDD_META = {
 const DDD_GEOJSON_URL = 'https://gist.githubusercontent.com/guilhermeprokisch/080c2cb1bd28e8aca54d114e453c91a4/raw/e3af50027ae0fd0b637f4cb60e19552b9f5e0a2a/brazil_phone_area_codes.geojson';
 const US_NPA_GEOJSON_URL = 'https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/USA_Telephone_Area_Codes/FeatureServer/0/query';
 const US_STATE_GEOJSON_URL = 'assets/us-states.geojson';
+const US_STATE_GEOJSON_FALLBACK_URL = 'https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json';
 const US_STATE_CODES = new Set('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' '));
 const countryDataCache = new Map();
 const countryMaskCache = new Map();
@@ -985,7 +1012,9 @@ const US_PLATE_SERIAL_SPECS = {
   WI:'AAA-9999', WY:'9-99999'
 };
 const US_PLATE_IMAGES = {
+  AL:'https://upload.wikimedia.org/wikipedia/commons/e/eb/Alabama_license_plate%2C_1987%E2%80%931991_series_with_October_1988_sticker.png',
   AK:'https://upload.wikimedia.org/wikipedia/commons/e/e4/Alaska_2020_License_Plate.jpg',
+  AZ:'https://upload.wikimedia.org/wikipedia/commons/0/0a/2005_Arizona_License_Plate.png',
   AR:'https://upload.wikimedia.org/wikipedia/commons/f/fb/Arkansas_2011_license_plate.jpg',
   CA:'https://upload.wikimedia.org/wikipedia/commons/4/4a/California_2018_License_Plate.jpg',
   CO:'https://upload.wikimedia.org/wikipedia/commons/0/0d/CO_License_Plate_%282000-2015%29.jpg',
@@ -994,7 +1023,12 @@ const US_PLATE_IMAGES = {
   FL:'https://upload.wikimedia.org/wikipedia/commons/2/2d/Florida_License_Plate_2026-present.jpg',
   GA:'https://upload.wikimedia.org/wikipedia/commons/3/33/Georgia_RXK8223.jpg',
   HI:'https://upload.wikimedia.org/wikipedia/commons/f/fc/1991_Hawaii_license_plate_MNG_728.jpg',
+  ID:'https://upload.wikimedia.org/wikipedia/commons/f/f3/Idaho_license_plate%2C_1979.png',
+  IL:'https://upload.wikimedia.org/wikipedia/commons/7/7d/1976_Illinois_license_plate.png',
+  IN:'https://upload.wikimedia.org/wikipedia/commons/8/8f/1951_Indiana_license_plate.JPG',
   IA:'https://upload.wikimedia.org/wikipedia/commons/8/84/Iowa_license_plate.jpg',
+  KS:'https://upload.wikimedia.org/wikipedia/commons/4/48/Kansas_License_Plate_2023_Registration_Decal.jpg',
+  KY:'https://upload.wikimedia.org/wikipedia/commons/0/03/Kentucky_License_Plate_1998.jpg',
   LA:'https://upload.wikimedia.org/wikipedia/commons/e/ea/Louisiana_America_250_license_plate.jpg',
   MD:'https://upload.wikimedia.org/wikipedia/commons/4/41/Maryland_2016_License_Plate.jpg',
   MA:'https://upload.wikimedia.org/wikipedia/commons/a/af/Massachusetts_2011_license_plate.png',
@@ -1007,10 +1041,14 @@ const US_PLATE_IMAGES = {
   NH:'https://upload.wikimedia.org/wikipedia/commons/7/74/New_Hampshire_license_plate.jpg',
   NJ:'https://upload.wikimedia.org/wikipedia/commons/9/9b/F92-PEE.JPG',
   NM:'https://upload.wikimedia.org/wikipedia/commons/1/1e/2019_New_Mexico_License_Plate.jpg',
+  NY:'https://upload.wikimedia.org/wikipedia/commons/1/1f/New_York_license_plate_1982.jpg',
   NC:'https://upload.wikimedia.org/wikipedia/commons/5/5a/2020_North_Carolina_License_Plate.png',
   ND:'https://upload.wikimedia.org/wikipedia/commons/7/76/North_Dakota_license_plate.jpg',
+  OK:'https://upload.wikimedia.org/wikipedia/commons/5/5e/1939_Oklahoma_license_plate.jpg',
   OR:'https://upload.wikimedia.org/wikipedia/commons/4/4a/2003_Oregon_License_Plate.jpg',
+  PA:'https://upload.wikimedia.org/wikipedia/commons/7/71/00536UP_plate_scan.png',
   SD:'https://upload.wikimedia.org/wikipedia/commons/4/4c/South_Dakota_license_plate.jpg',
+  SC:'https://upload.wikimedia.org/wikipedia/commons/7/71/2020_South_Carolina_passenger_car_rear_license_plate.png',
   TN:'https://upload.wikimedia.org/wikipedia/commons/d/dd/2022_Tennessee_License_Plate_Base_-_Standard_Automobile.png',
   TX:'https://upload.wikimedia.org/wikipedia/commons/b/b9/Texas_Passenger_Car_License_Plate_2020.png',
   UT:'https://upload.wikimedia.org/wikipedia/commons/3/39/UTnewfont.png',
@@ -1022,7 +1060,8 @@ const US_PLATE_IMAGES = {
   ME:'https://upload.wikimedia.org/wikipedia/commons/a/a3/Sample_license_plate_of_Maine%2C_2025.png',
   NE:'https://upload.wikimedia.org/wikipedia/en/9/9a/Nebraska_License_Plate_2023_Design.jpg',
   OH:'https://upload.wikimedia.org/wikipedia/commons/7/72/2021_Ohio_License_Plate.png',
-  RI:'https://upload.wikimedia.org/wikipedia/commons/c/ce/License_Plate_of_Rhode_Island.png'
+  RI:'https://upload.wikimedia.org/wikipedia/commons/c/ce/License_Plate_of_Rhode_Island.png',
+  WY:'https://upload.wikimedia.org/wikipedia/commons/9/9b/Wyoming_1957_license_plate.jpg'
 };
 Object.entries(US_PLATE_VARIANTS).forEach(([state, variants]) => {
   variants[0].image = US_PLATE_IMAGES[state] || null;
@@ -1037,6 +1076,7 @@ let countryMask = null;
 
 let dddBounds = null;
 let dddLabelOverlay = null;
+let platePinOverlay = null;
 let dddFlashState = new Map();
 let mapReadyForClicks = false;
 var currentMode = 'training';
@@ -1049,7 +1089,7 @@ function activeGameLabel(){ return isLicensePlateGame() ? 'License Plates' : 'Ar
 function stateName(code){ return US_STATE_NAMES[code] || STATE_NAMES[code] || code || ''; }
 function regionLabel(code){
   const info = regionEls[code];
-  return isLicensePlateGame() ? (info?.uf || code) : code;
+  return isLicensePlateGame() ? (info?.uf ? stateName(info.uf) : code) : code;
 }
 
 function extendBoundsFromGeometry(bounds, geometry){
@@ -1286,7 +1326,7 @@ function refreshLabelVisibility(){
   Object.entries(regionEls).forEach(([ddd, el]) => {
     if(!el.label) return;
     const codes = el.label.__codes || [Number(ddd)];
-    const revealed = isStudyDifficulty() || (currentMode !== 'challenge' && revealToggle.checked && codes.some(code => solved.has(code)));
+    const revealed = (isStudyDifficulty() && !isLicensePlateGame()) || (currentMode !== 'challenge' && revealToggle.checked && codes.some(code => solved.has(code)));
     const peeking = codes.some(code => tempLabelReveals.has(code));
     el.label.classList.toggle('show', revealed || peeking);
     el.label.classList.toggle('peek-wrong', peeking);
@@ -1338,7 +1378,7 @@ function getDddLabelOverlayClass(){
         const peeking = item.codes.some(code => tempLabelReveals.has(code));
         const revealed = item.codes.some(code => solved.has(code));
          item.el.textContent = item.codes.map(regionLabel).join('/');
-         item.el.classList.toggle('show', isStudyDifficulty() || (currentMode !== 'challenge' && revealToggle.checked && revealed) || peeking);
+         item.el.classList.toggle('show', (isStudyDifficulty() && !isLicensePlateGame()) || (currentMode !== 'challenge' && revealToggle.checked && revealed) || peeking);
         item.el.classList.toggle('peek-wrong', peeking);
       }
     }
@@ -1350,6 +1390,71 @@ function getDddLabelOverlayClass(){
   };
 
   return DddLabelOverlayClass;
+}
+
+let PlatePinOverlayClass = null;
+
+function getPlatePinOverlayClass(){
+  if(PlatePinOverlayClass) return PlatePinOverlayClass;
+  if(!window.google || !google.maps || !google.maps.OverlayView) return null;
+
+  PlatePinOverlayClass = class extends google.maps.OverlayView {
+    constructor(items){
+      super();
+      this.items = items;
+      this.container = null;
+      this.visible_ = true;
+    }
+
+    setVisible(visible){
+      this.visible_ = !!visible;
+      if(this.container) this.container.style.display = this.visible_ ? 'block' : 'none';
+    }
+
+    onAdd(){
+      this.container = document.createElement('div');
+      this.container.style.position = 'absolute';
+      this.container.style.inset = '0';
+      this.container.style.pointerEvents = 'none';
+      this.container.style.display = this.visible_ ? 'block' : 'none';
+      for(const item of this.items){
+        const img = document.createElement('img');
+        img.className = 'plate-pin';
+        img.draggable = false;
+        img.alt = '';
+        const variants = US_PLATE_VARIANTS[item.state] || [];
+        img.src = plateImageUrl(item.state, variants[0] || null);
+        img.style.position = 'absolute';
+        img.style.transform = 'translate(-50%, -50%)';
+        item.el = img;
+        this.container.appendChild(img);
+      }
+      this.getPanes().overlayMouseTarget.appendChild(this.container);
+    }
+
+    draw(){
+      const projection = this.getProjection();
+      if(!projection) return;
+      for(const item of this.items){
+        if(!item.el || !item.anchor) continue;
+        const point = projection.fromLatLngToDivPixel(item.anchor);
+        item.el.style.left = `${point.x}px`;
+        item.el.style.top = `${point.y}px`;
+      }
+    }
+
+    onRemove(){
+      if(this.container && this.container.parentNode) this.container.parentNode.removeChild(this.container);
+      this.container = null;
+    }
+  };
+
+  return PlatePinOverlayClass;
+}
+
+function refreshPlatePinOverlay(){
+  if(!platePinOverlay) return;
+  platePinOverlay.setVisible(isStudyDifficulty() && currentView === 'game');
 }
 
 async function loadDddGeoJson(loadToken){
@@ -1523,9 +1628,22 @@ async function loadUsPlateGeoJson(loadToken){
   clearActiveCountryLayer();
   let responsePromise = countryDataCache.get('us-states');
   if(!responsePromise){
-    responsePromise = fetch(US_STATE_GEOJSON_URL).then(response => {
-      if(!response.ok) throw new Error(`Failed to load US state geometry: ${response.status}`);
-      return response.json();
+    responsePromise = (async () => {
+      let lastError = null;
+      for(const url of [US_STATE_GEOJSON_URL, US_STATE_GEOJSON_FALLBACK_URL]){
+        try{
+          const response = await fetch(url);
+          if(!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+          return await response.json();
+        } catch(err){
+          lastError = err;
+          console.warn(`Unable to load US state geometry from ${url}.`, err);
+        }
+      }
+      throw new Error(`Failed to load US state geometry: ${lastError?.message || 'network error'}`);
+    })().catch(err => {
+      countryDataCache.delete('us-states');
+      throw err;
     });
     countryDataCache.set('us-states', responsePromise);
   }
@@ -1575,6 +1693,13 @@ async function loadUsPlateGeoJson(loadToken){
   if(dddLabelOverlay) dddLabelOverlay.setMap(null);
   dddLabelOverlay = new OverlayClass(items);
   dddLabelOverlay.setMap(window.map);
+  const PlateOverlayClass = getPlatePinOverlayClass();
+  if(PlateOverlayClass){
+    if(platePinOverlay) platePinOverlay.setMap(null);
+    platePinOverlay = new PlateOverlayClass(Object.values(regionEls).filter(info => info.anchor).map(info => ({codes:[info.code], anchor:info.anchor, state:info.uf})));
+    platePinOverlay.setMap(window.map);
+  }
+  refreshPlatePinOverlay();
   activeDataset = {regions:Object.values(regionEls).map(info => ({code:info.code, uf:info.uf, geometry:info.geometry, anchor:info.anchor})), groups:null};
   countryDataReady = true;
   rebuildCodeGroups();
@@ -1595,6 +1720,8 @@ async function loadUsPlateGeoJson(loadToken){
 function clearActiveCountryLayer(){
   if(dddLabelOverlay) dddLabelOverlay.setMap(null);
   dddLabelOverlay = null;
+  if(platePinOverlay) platePinOverlay.setMap(null);
+  platePinOverlay = null;
   if(window.map?.data){
     const remove = [];
     window.map.data.forEach(feature => {
@@ -1763,6 +1890,8 @@ function updatePlateTuning(){
   plateImage.style.setProperty('--plate-blur', `${plateBlurSlider.value}px`);
   plateImage.style.setProperty('--plate-scale', plateScaleSlider.value);
   plateImage.style.setProperty('--plate-saturation', plateSaturationSlider.value);
+  document.documentElement.style.setProperty('--plate-blur', `${plateBlurSlider.value}px`);
+  document.documentElement.style.setProperty('--plate-saturation', plateSaturationSlider.value);
   plateBlurValue.textContent = `${plateBlurSlider.value}px`;
   plateScaleValue.textContent = Number(plateScaleSlider.value).toFixed(3);
   plateSaturationValue.textContent = Number(plateSaturationSlider.value).toFixed(2);
@@ -1771,6 +1900,7 @@ function updatePlateTuning(){
 function refreshPlateDisplay(){
   const visible = isLicensePlateGame() && currentView === 'game' && !!currentPlateVariant;
   plateDisplay.classList.toggle('hidden', !visible);
+  refreshPlatePinOverlay();
 }
 
 function showView(view){
@@ -1808,6 +1938,7 @@ function applyModeUi(){
   scoreCorrectLabelEl.textContent = challenge ? 'Points' : 'Correct';
   scoreTotalLabelEl.textContent = challenge ? 'Guesses' : 'Asked';
   scoreStreakLabelEl.textContent = challenge ? 'Last' : 'Streak';
+  refreshPlatePinOverlay();
 }
 
 function refreshConfigModeCopy(){
@@ -1825,7 +1956,7 @@ function refreshConfigModeCopy(){
   configModeNote.textContent = challenge
      ? `Challenge uses all ${isLicensePlateGame() ? 'states' : `${config.codeLabel} zones`} and lets you tune the timer and round count before starting.`
     : isStudyDifficulty()
-       ? `Study shows every ${isLicensePlateGame() ? 'state' : config.codeLabel} and disables questions, scoring, and progress.`
+        ? (isLicensePlateGame() ? 'Study pins every state\'s license plate on the map with no labels, questions, scoring, or progress.' : `Study shows every ${config.codeLabel} and disables questions, scoring, and progress.`)
        : isLicensePlateGame() ? 'Tune the training settings before identifying each state.' : `Tune the training settings and ${config.codeLabel} groups before starting.`;
   difficultyPanel.classList.toggle('hidden', challenge);
   challengePanel.classList.toggle('hidden', !challenge);
@@ -1836,7 +1967,7 @@ function refreshConfigModeCopy(){
   challengeConfigStack.classList.toggle('hidden', !challenge);
   trainingConfigStack.classList.toggle('hidden', challenge);
   trainingNote.textContent = isStudyDifficulty()
-    ? `Study mode shows every ${isLicensePlateGame() ? 'state' : 'code'} and disables questions, scoring, and progress.`
+    ? (isLicensePlateGame() ? 'Study pins every state\'s license plate on the map with no labels, questions, scoring, or progress.' : 'Study mode shows every code and disables questions, scoring, and progress.')
     : 'Solved regions drop out of the question pool — each one is asked once per game.';
   const study = isStudyDifficulty();
   borderToggle.disabled = study;
@@ -2534,7 +2665,9 @@ function nextQuestion(){
     currentTarget = null;
     feedback.textContent = '';
     feedback.className = 'feedback';
-    promptText.textContent = `Study mode — all ${isLicensePlateGame() ? 'states' : COUNTRY_CONFIGS[activeCountryId].codeLabel + ' codes'} are visible.`;
+    promptText.textContent = isLicensePlateGame()
+      ? 'Study mode — every state\'s license plate is pinned on the map.'
+      : `Study mode — all ${COUNTRY_CONFIGS[activeCountryId].codeLabel} codes are visible.`;
     currentPlateVariant = null;
     refreshPlateDisplay();
     refreshLabelVisibility();
